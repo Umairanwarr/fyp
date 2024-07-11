@@ -4,17 +4,20 @@ import 'package:first_bus_project/models/route_model.dart';
 import 'package:first_bus_project/models/user_model.dart';
 import 'package:first_bus_project/widgets/custom_button.dart';
 import 'package:first_bus_project/widgets/custom_textfield.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class DriverManageStops extends StatefulWidget {
-  UserModel userModel;
-  BusRouteModel? busRouteModel;
+  final UserModel userModel;
+  final BusRouteModel? busRouteModel;
+
   DriverManageStops({
-    super.key,
+    Key? key,
     required this.userModel,
     required this.busRouteModel,
-  });
+  }) : super(key: key);
 
   @override
   State<DriverManageStops> createState() => _DriverManageStopsState();
@@ -58,15 +61,9 @@ class _DriverManageStopsState extends State<DriverManageStops> {
     _startLocationController.dispose();
     _endLocationController.dispose();
     _totalStopsController.dispose();
-    for (var controller in _stopNameControllers) {
-      controller.dispose();
-    }
-    for (var controller in _timeControllers) {
-      controller.dispose();
-    }
-    for (var controller in _stopLocationControllers) {
-      controller.dispose();
-    }
+    _stopNameControllers.forEach((controller) => controller.dispose());
+    _timeControllers.forEach((controller) => controller.dispose());
+    _stopLocationControllers.forEach((controller) => controller.dispose());
     super.dispose();
   }
 
@@ -101,158 +98,220 @@ class _DriverManageStopsState extends State<DriverManageStops> {
       }
     }
   }
-// ------------------ Select location container method //PickUp ------------------
-
-
-   void addMarker(LatLng position) async {
-    Coordinates coordinates =
-        Coordinates(position.latitude, position.longitude);
-    var first = addresses.first;
-
-    setState(() {
-      location = first.addressLine.toString();
-      currentLocationMarker = Marker(
-        markerId: MarkerId(position.toString()),
-        position: position,
-        infoWindow: const InfoWindow(title: 'Go to This Location'),
-      );
-      location = first.addressLine.toString();
-      lat = position.latitude;
-      long = position.longitude;
-    });
-  }
-
-  void selectLocation(int index) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Center(child: Text("Pick up Point:${index + 1}")),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                decoration:
-                    BoxDecoration(borderRadius: BorderRadius.circular(10)),
-                height: 300,
-                child: GoogleMap(
-                  onTap: addMarker,
-                  initialCameraPosition: CameraPosition(
-                    target: LatLng(37.7749, -122.4194),
-                    zoom: 12,
-                  ),
-                  onMapCreated: (GoogleMapController controller) {},
-                  markers: Set<Marker>.of(
-                    <Marker>[
-                      Marker(
-                        markerId: MarkerId('pickup-location'),
-                        position: LatLng(37.7749, -122.4194),
-                        draggable: true,
-                        onDragEnd: (newPosition) {
-                          _startLocationController.text =
-                              "${newPosition.latitude}, ${newPosition.longitude}";
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                // Add functionality for the button here
-              },
-              child: Text('Set Pick Up Point'),
-            ),
-            SizedBox(height: 10),
-          ],
-        ),
-      ),
-    );
-  }
 
   void getPickup() {
-    showDialog(
+    LatLng? pickedLocation; // Variable to store the picked location
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => Dialog(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text('Set Your Pick Up Point'),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {}, // Prevents dismissing bottom sheet on tap
               child: Container(
-                decoration:
-                    BoxDecoration(borderRadius: BorderRadius.circular(10)),
-                height: 300,
-                child: GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: LatLng(37.7749, -122.4194),
-                    zoom: 12,
-                  ),
-                  onMapCreated: (GoogleMapController controller) {},
-                  markers: Set<Marker>.of(
-                    <Marker>[
-                      Marker(
-                        markerId: MarkerId('pickup-location'),
-                        position: LatLng(37.7749, -122.4194),
-                        draggable: true,
-                        onDragEnd: (newPosition) {
-                          _startLocationController.text =
-                              "${newPosition.latitude}, ${newPosition.longitude}";
+                padding: EdgeInsets.all(16.0),
+                height: 400,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Text('Set Your Pick Up Point'),
+                    SizedBox(height: 8.0),
+                    Expanded(
+                      child: GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: LatLng(37.7749, -122.4194),
+                          zoom: 12,
+                        ),
+                        onTap: (LatLng position) {
+                          setState(() {
+                            pickedLocation = position;
+                          });
                         },
+                        markers: pickedLocation != null
+                            ? Set.of([
+                                Marker(
+                                  markerId: MarkerId('pickup-location'),
+                                  position: pickedLocation!,
+                                  draggable: true,
+                                  onDragEnd: (newPosition) {
+                                    setState(() {
+                                      pickedLocation = newPosition;
+                                    });
+                                  },
+                                ),
+                              ])
+                            : Set(),
+                        onMapCreated: (GoogleMapController controller) {},
+                        gestureRecognizers: Set()
+                          ..add(Factory<PanGestureRecognizer>(
+                            () => PanGestureRecognizer(),
+                          )),
                       ),
-                    ],
-                  ),
+                    ),
+                    SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (pickedLocation != null) {
+                          _startLocationController.text =
+                              "${pickedLocation!.latitude}, ${pickedLocation!.longitude}";
+                        }
+                        Navigator.of(context).pop(); // Close the bottom sheet
+                      },
+                      child: Text('Set Pick Up Point'),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                // Add functionality for the button here
-              },
-              child: Text('Set Pick Up Point'),
-            ),
-            SizedBox(height: 10),
-          ],
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
   void getDestination() {
-    showDialog(
+    LatLng? pickedLocation; // Variable to store the picked location
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          height: 300,
-          child: GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: LatLng(37.7749, -122.4194),
-              zoom: 12,
-            ),
-            onMapCreated: (GoogleMapController controller) {},
-            markers: Set<Marker>.of(
-              <Marker>[
-                Marker(
-                  markerId: MarkerId('destination-location'),
-                  position: LatLng(37.7749, -122.4194),
-                  draggable: true,
-                  onDragEnd: (newPosition) {
-                    _endLocationController.text =
-                        "${newPosition.latitude}, ${newPosition.longitude}";
-                  },
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {}, // Prevents dismissing bottom sheet on tap
+              child: Container(
+                padding: EdgeInsets.all(16.0),
+                height: 400,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Text('Set Your Destination Point'),
+                    SizedBox(height: 8.0),
+                    Expanded(
+                      child: GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: LatLng(37.7749, -122.4194),
+                          zoom: 12,
+                        ),
+                        onTap: (LatLng position) {
+                          setState(() {
+                            pickedLocation = position;
+                          });
+                        },
+                        markers: pickedLocation != null
+                            ? Set.of([
+                                Marker(
+                                  markerId: MarkerId('destination-location'),
+                                  position: pickedLocation!,
+                                  draggable: true,
+                                  onDragEnd: (newPosition) {
+                                    setState(() {
+                                      pickedLocation = newPosition;
+                                    });
+                                  },
+                                ),
+                              ])
+                            : Set(),
+                        onMapCreated: (GoogleMapController controller) {},
+                        gestureRecognizers: Set()
+                          ..add(Factory<PanGestureRecognizer>(
+                            () => PanGestureRecognizer(),
+                          )),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (pickedLocation != null) {
+                          _endLocationController.text =
+                              "${pickedLocation!.latitude}, ${pickedLocation!.longitude}";
+                        }
+                        Navigator.of(context).pop(); // Close the bottom sheet
+                      },
+                      child: Text('Set Destination Point'),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        ),
-      ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void selectLocation(int index) {
+    LatLng? pickedLocation; // Variable to store the picked location
+
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {}, // Prevents dismissing bottom sheet on tap
+              child: Container(
+                padding: EdgeInsets.all(16.0),
+                height: 400,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Center(child: Text("Pick up Point ${index + 1}")),
+                    SizedBox(height: 8.0),
+                    Expanded(
+                      child: GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: LatLng(37.7749, -122.4194),
+                          zoom: 12,
+                        ),
+                        onTap: (LatLng position) {
+                          setState(() {
+                            pickedLocation = position;
+                          });
+                        },
+                        markers: pickedLocation != null
+                            ? Set.of([
+                                Marker(
+                                  markerId: MarkerId('pickup-location-$index'),
+                                  position: pickedLocation!,
+                                  draggable: true,
+                                  onDragEnd: (newPosition) {
+                                    setState(() {
+                                      pickedLocation = newPosition;
+                                    });
+                                  },
+                                ),
+                              ])
+                            : Set(),
+                        onMapCreated: (GoogleMapController controller) {},
+                        gestureRecognizers: Set()
+                          ..add(Factory<PanGestureRecognizer>(
+                            () => PanGestureRecognizer(),
+                          )),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (pickedLocation != null) {
+                          _stopLocationControllers[index].text =
+                              "${pickedLocation!.latitude}, ${pickedLocation!.longitude}";
+                        }
+                        Navigator.of(context).pop(); // Close the bottom sheet
+                      },
+                      child: Text('Set Pick Up Point ${index + 1}'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -300,7 +359,10 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                 SizedBox(height: screenHeight * 0.025),
                 CustomFields(
                   icon: IconButton(
-                    onPressed: getPickup,
+                    onPressed: () {
+                      setState(() {});
+                      getPickup();
+                    },
                     icon: Icon(
                       Icons.location_pin,
                     ),
