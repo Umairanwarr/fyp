@@ -174,6 +174,9 @@ class _DriverManageStopsState extends State<DriverManageStops> {
   void getDestination() {
     LatLng? pickedLocation; // Variable to store the picked location
 
+    // Retrieve the pickup location if available
+    LatLng? pickupLocation = getPickupLocation();
+
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -201,20 +204,32 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                             pickedLocation = position;
                           });
                         },
-                        markers: pickedLocation != null
-                            ? Set.of([
-                                Marker(
-                                  markerId: MarkerId('destination-location'),
-                                  position: pickedLocation!,
-                                  draggable: true,
-                                  onDragEnd: (newPosition) {
-                                    setState(() {
-                                      pickedLocation = newPosition;
-                                    });
-                                  },
-                                ),
-                              ])
-                            : Set(),
+                        markers: {
+                          // Add marker for pickup location if available
+                          if (pickupLocation != null)
+                            Marker(
+                              markerId: MarkerId('pickup-location'),
+                              position: pickupLocation,
+                              draggable: true,
+                              onDragEnd: (newPosition) {
+                                setState(() {
+                                  pickedLocation = newPosition;
+                                });
+                              },
+                            ),
+                          // Add marker for destination location
+                          if (pickedLocation != null)
+                            Marker(
+                              markerId: MarkerId('destination-location'),
+                              position: pickedLocation!,
+                              draggable: true,
+                              onDragEnd: (newPosition) {
+                                setState(() {
+                                  pickedLocation = newPosition;
+                                });
+                              },
+                            ),
+                        },
                         onMapCreated: (GoogleMapController controller) {},
                         gestureRecognizers: Set()
                           ..add(Factory<PanGestureRecognizer>(
@@ -241,6 +256,20 @@ class _DriverManageStopsState extends State<DriverManageStops> {
         );
       },
     );
+  }
+
+// Helper function to get pickup location
+  LatLng? getPickupLocation() {
+    final String pickupLocationText = _startLocationController.text;
+    if (pickupLocationText.isNotEmpty) {
+      List<String> coordinates = pickupLocationText.split(',');
+      if (coordinates.length == 2) {
+        double lat = double.tryParse(coordinates[0].trim()) ?? 0.0;
+        double lng = double.tryParse(coordinates[1].trim()) ?? 0.0;
+        return LatLng(lat, lng);
+      }
+    }
+    return null;
   }
 
   void selectLocation(int index) {
