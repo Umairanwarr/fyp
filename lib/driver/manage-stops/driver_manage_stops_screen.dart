@@ -1,14 +1,11 @@
-// ignore_for_file: must_be_immutable
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:first_bus_project/models/route_model.dart';
 import 'package:first_bus_project/models/user_model.dart';
-import 'package:first_bus_project/services/auth_service.dart';
-import 'package:first_bus_project/services/routes_services.dart';
 import 'package:first_bus_project/widgets/custom_button.dart';
 import 'package:first_bus_project/widgets/custom_textfield.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class DriverManageStops extends StatefulWidget {
   UserModel userModel;
@@ -49,6 +46,9 @@ class _DriverManageStopsState extends State<DriverManageStops> {
     _timeControllers = widget.busRouteModel!.stops
         .map((stop) => TextEditingController(text: stop.time))
         .toList();
+    _stopLocationControllers = widget.busRouteModel!.stops
+        .map((stop) => TextEditingController(text: stop.stopLocation))
+        .toList();
 
     super.initState();
   }
@@ -64,10 +64,13 @@ class _DriverManageStopsState extends State<DriverManageStops> {
     for (var controller in _timeControllers) {
       controller.dispose();
     }
+    for (var controller in _stopLocationControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
-  void update() async{
+  void update() async {
     if (_formKey.currentState!.validate()) {
       final busRoute = BusRouteModel(
         startLocation: _startLocationController.text,
@@ -82,7 +85,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
         }),
       );
 
-    try {
+      try {
         await FirebaseFirestore.instance
             .collection('busRoutes')
             .doc(FirebaseAuth.instance.currentUser!.uid)
@@ -98,58 +101,159 @@ class _DriverManageStopsState extends State<DriverManageStops> {
       }
     }
   }
+// ------------------ Select location container method //PickUp ------------------
 
-// ------------------ Select location container method ------------------
 
-  void selectLocation(int index){
-   
-    String location = ""; /// ========== ya map sa ay gi 
-_stopLocationControllers[index].text = location;
-//  for (var controller in _stopLocationControllers) {
-//     print(controller.text);
-//   }
-showDialog(context: context, builder: (context) => Dialog(
-  child: Container(
-height: 200,
-child: Column(
-  children: [
-    SizedBox(height: 10,),
-    Text("Stop number: ${index+1}"),
-  ],
-)
-    //yaha google maps lagain aik method 
-  ),
-),);
+   void addMarker(LatLng position) async {
+    Coordinates coordinates =
+        Coordinates(position.latitude, position.longitude);
+    var first = addresses.first;
+
+    setState(() {
+      location = first.addressLine.toString();
+      currentLocationMarker = Marker(
+        markerId: MarkerId(position.toString()),
+        position: position,
+        infoWindow: const InfoWindow(title: 'Go to This Location'),
+      );
+      location = first.addressLine.toString();
+      lat = position.latitude;
+      long = position.longitude;
+    });
   }
 
-  getPickup(){
-showDialog(context: context, builder: (context) => Dialog(
-  child: Container(
-height: 200,
-child: Column(
-  children: [
-    SizedBox(height: 10,),
-    Text("Pick up location"),
-  ],
-)
-    //yaha google maps lagain aik method 
-  ),
-),);
+  void selectLocation(int index) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Center(child: Text("Pick up Point:${index + 1}")),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                decoration:
+                    BoxDecoration(borderRadius: BorderRadius.circular(10)),
+                height: 300,
+                child: GoogleMap(
+                  onTap: addMarker,
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(37.7749, -122.4194),
+                    zoom: 12,
+                  ),
+                  onMapCreated: (GoogleMapController controller) {},
+                  markers: Set<Marker>.of(
+                    <Marker>[
+                      Marker(
+                        markerId: MarkerId('pickup-location'),
+                        position: LatLng(37.7749, -122.4194),
+                        draggable: true,
+                        onDragEnd: (newPosition) {
+                          _startLocationController.text =
+                              "${newPosition.latitude}, ${newPosition.longitude}";
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                // Add functionality for the button here
+              },
+              child: Text('Set Pick Up Point'),
+            ),
+            SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
   }
 
-  getDestination(){
-showDialog(context: context, builder: (context) => Dialog(
-  child: Container(
-height: 200,
-child: Column(
-  children: [
-    SizedBox(height: 10,),
-    Text("Destination location"),
-  ],
-)
-    //yaha google maps lagain aik method 
-  ),
-),);
+  void getPickup() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text('Set Your Pick Up Point'),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                decoration:
+                    BoxDecoration(borderRadius: BorderRadius.circular(10)),
+                height: 300,
+                child: GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(37.7749, -122.4194),
+                    zoom: 12,
+                  ),
+                  onMapCreated: (GoogleMapController controller) {},
+                  markers: Set<Marker>.of(
+                    <Marker>[
+                      Marker(
+                        markerId: MarkerId('pickup-location'),
+                        position: LatLng(37.7749, -122.4194),
+                        draggable: true,
+                        onDragEnd: (newPosition) {
+                          _startLocationController.text =
+                              "${newPosition.latitude}, ${newPosition.longitude}";
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                // Add functionality for the button here
+              },
+              child: Text('Set Pick Up Point'),
+            ),
+            SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void getDestination() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: SizedBox(
+          height: 300,
+          child: GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: LatLng(37.7749, -122.4194),
+              zoom: 12,
+            ),
+            onMapCreated: (GoogleMapController controller) {},
+            markers: Set<Marker>.of(
+              <Marker>[
+                Marker(
+                  markerId: MarkerId('destination-location'),
+                  position: LatLng(37.7749, -122.4194),
+                  draggable: true,
+                  onDragEnd: (newPosition) {
+                    _endLocationController.text =
+                        "${newPosition.latitude}, ${newPosition.longitude}";
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -195,11 +299,11 @@ child: Column(
                 ),
                 SizedBox(height: screenHeight * 0.025),
                 CustomFields(
-                  icon:  IconButton(
-                    onPressed: () {
-                      getPickup();
-                    },
-                    icon: Icon(Icons.location_pin,),
+                  icon: IconButton(
+                    onPressed: getPickup,
+                    icon: Icon(
+                      Icons.location_pin,
+                    ),
                     color: Color(0XFF419A95),
                   ),
                   isPassword: false,
@@ -215,11 +319,11 @@ child: Column(
                 ),
                 SizedBox(height: screenHeight * 0.025),
                 CustomFields(
-                  icon:  IconButton(
-                    onPressed: () {
-                      getDestination();
-                    },
-                    icon: Icon(Icons.location_pin,),
+                  icon: IconButton(
+                    onPressed: getDestination,
+                    icon: Icon(
+                      Icons.location_pin,
+                    ),
                     color: Color(0XFF419A95),
                   ),
                   isPassword: false,
@@ -288,17 +392,14 @@ child: Column(
                           totalStops,
                           (index) => Column(
                             children: [
-                              
                               SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceAround,
                                   children: [
-                                    
                                     SizedBox(
                                       width: screenWidth * 0.5,
-                                      
                                       child: CustomFields(
                                         icon: const Icon(
                                           Icons.location_pin,
@@ -340,26 +441,32 @@ child: Column(
 
                                     //////------------------------------- Select location container -----------------------------
                                     GestureDetector(
-                                      onTap: (){
+                                      onTap: () {
                                         selectLocation(index);
                                       },
                                       child: Container(
-                                        alignment: Alignment.center,
-                                        height: 55,
-                                        width: screenWidth * 0.4,
-                                        decoration: BoxDecoration(
-                                          color: _stopLocationControllers.contains(index) ? Colors.red : Color(0XFF419A95), 
-                                          borderRadius: BorderRadius.circular(5),
-                                          
-                                        ),child: const Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                          children: [
-                                            Text("Select location", style: TextStyle(color: Colors.white)),
-                                            Icon(Icons.room, color: Colors.white),
-                                          
-                                          ],
-                                        )
-                                      ),
+                                          alignment: Alignment.center,
+                                          height: 55,
+                                          width: screenWidth * 0.4,
+                                          decoration: BoxDecoration(
+                                            color: _stopLocationControllers
+                                                    .contains(index)
+                                                ? Colors.red
+                                                : Color(0XFF419A95),
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                          ),
+                                          child: const Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceEvenly,
+                                            children: [
+                                              Text("Select location",
+                                                  style: TextStyle(
+                                                      color: Colors.white)),
+                                              Icon(Icons.room,
+                                                  color: Colors.white),
+                                            ],
+                                          )),
                                     ),
                                   ],
                                 ),

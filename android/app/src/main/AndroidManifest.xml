@@ -9,6 +9,8 @@
         android:label="First Bus"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data android:name="com.google.android.geo.API_KEY"
+               android:value="AIzaSyDnAF3JAM7UqTudig7J-VRqTsdiyQ4Hw-Q"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
