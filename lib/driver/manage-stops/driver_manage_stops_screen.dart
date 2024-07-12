@@ -7,6 +7,7 @@ import 'package:first_bus_project/widgets/custom_textfield.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class DriverManageStops extends StatefulWidget {
@@ -28,11 +29,13 @@ class _DriverManageStopsState extends State<DriverManageStops> {
   late TextEditingController _startLocationController;
   late TextEditingController _endLocationController;
   late TextEditingController _totalStopsController;
+   LatLng? pickup;
+   LatLng? destination;
   List<TextEditingController> _stopNameControllers = [];
   List<TextEditingController> _timeControllers = [];
   List<TextEditingController> _stopLocationControllers = [];
   int totalStops = 0;
-
+Set<Marker> markers = {};
   @override
   void initState() {
     _startLocationController =
@@ -103,6 +106,8 @@ class _DriverManageStopsState extends State<DriverManageStops> {
     LatLng? pickedLocation; // Variable to store the picked location
 
     showModalBottomSheet(
+      isDismissible: false,
+      isScrollControlled: false,
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -111,38 +116,56 @@ class _DriverManageStopsState extends State<DriverManageStops> {
               behavior: HitTestBehavior.opaque,
               onTap: () {}, // Prevents dismissing bottom sheet on tap
               child: Container(
-                padding: EdgeInsets.all(16.0),
-                height: 400,
+                
+                color: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal:16.0, vertical: 10),
+                height: 500,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    Text('Set Your Pick Up Point'),
-                    SizedBox(height: 8.0),
+                    SizedBox(height: 10.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Set Your Pick Up Point', textAlign: TextAlign.center,style: TextStyle(color: Colors.black, fontSize:16, fontWeight:FontWeight.bold),),
+                        IconButton(onPressed: () {
+                          Navigator.pop(context);
+                        }, icon: Icon(Icons.close, color: Colors.red, ))
+                      ],
+                    ),
+                    SizedBox(height: 10.0),
                     Expanded(
                       child: GoogleMap(
                         initialCameraPosition: CameraPosition(
                           target: LatLng(37.7749, -122.4194),
-                          zoom: 12,
+                          zoom: 15,
                         ),
                         onTap: (LatLng position) {
                           setState(() {
                             pickedLocation = position;
+                            pickup = position;
                           });
                         },
-                        markers: pickedLocation != null
-                            ? Set.of([
-                                Marker(
-                                  markerId: MarkerId('pickup-location'),
-                                  position: pickedLocation!,
-                                  draggable: true,
-                                  onDragEnd: (newPosition) {
-                                    setState(() {
-                                      pickedLocation = newPosition;
-                                    });
-                                  },
-                                ),
-                              ])
-                            : Set(),
+                        markers: {
+                          if(pickup != null) 
+                           Marker(
+                            infoWindow: InfoWindow(
+                                title: "pickup-location"
+                              ),
+                              markerId: MarkerId('pick up location'),
+                              position: pickup!,
+                              draggable: true,
+                            ),
+                          if(destination != null) 
+                           Marker(
+                            infoWindow: InfoWindow(
+                                title: "Destination-location"
+                              ),
+                              markerId: MarkerId('Destination location'),
+                              position: destination!,
+                              draggable: true,
+                            ),
+                        },
                         onMapCreated: (GoogleMapController controller) {},
                         gestureRecognizers: Set()
                           ..add(Factory<PanGestureRecognizer>(
@@ -151,16 +174,31 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                       ),
                     ),
                     SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: () {
+                    GestureDetector(
+                      onTap: () async{
+                       
                         if (pickedLocation != null) {
-                          _startLocationController.text =
-                              "${pickedLocation!.latitude}, ${pickedLocation!.longitude}";
+                      List<Placemark> placemarks = await placemarkFromCoordinates(
+          pickedLocation!.latitude,
+          pickedLocation!.longitude,
+        );
+        Placemark place = placemarks.first;
+         _startLocationController.text = "${place.name}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
+                          
                         }
                         Navigator.of(context).pop(); // Close the bottom sheet
+                        
                       },
-                      child: Text('Set Pick Up Point'),
-                    ),
+                      child: Container(
+                        alignment: Alignment.center,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.green[400],
+                          borderRadius: BorderRadius.circular(5),
+
+                        ),child: Text("Confirm", style: TextStyle(color: Colors.white, fontSize:16, fontWeight:FontWeight.bold),)
+                      ),
+                    )
                   ],
                 ),
               ),
@@ -171,11 +209,12 @@ class _DriverManageStopsState extends State<DriverManageStops> {
     );
   }
 
-  void getDestination() {
-    LatLng? pickedLocation; // Variable to store the picked location
+  
 
-    // Retrieve the pickup location if available
-    LatLng? pickupLocation = getPickupLocation();
+  void getDestination() {
+    LatLng? destinationLocation = getLocationPoints(); // Variable to store the picked location
+
+  
 
     showModalBottomSheet(
       context: context,
@@ -186,13 +225,21 @@ class _DriverManageStopsState extends State<DriverManageStops> {
               behavior: HitTestBehavior.opaque,
               onTap: () {}, // Prevents dismissing bottom sheet on tap
               child: Container(
+                color: Colors.white,
                 padding: EdgeInsets.all(16.0),
                 height: 400,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    Text('Set Your Destination Point'),
-                    SizedBox(height: 8.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Set Your Destination Point', textAlign: TextAlign.center,style: TextStyle(color: Colors.black, fontSize:16, fontWeight:FontWeight.bold),),
+                        IconButton(onPressed: () {
+                          Navigator.pop(context);
+                        }, icon: Icon(Icons.close, color: Colors.red, ))
+                      ],
+                    ),                    SizedBox(height: 8.0),
                     Expanded(
                       child: GoogleMap(
                         initialCameraPosition: CameraPosition(
@@ -201,31 +248,34 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                         ),
                         onTap: (LatLng position) {
                           setState(() {
-                            pickedLocation = position;
+                            destinationLocation = position;
+                            destination = position;
                           });
                         },
                         markers: {
                           // Add marker for pickup location if available
-                          if (pickupLocation != null)
+                         
                             Marker(
+                              infoWindow: InfoWindow(
+                                title: "pickup-location"
+                              ),
                               markerId: MarkerId('pickup-location'),
-                              position: pickupLocation,
+                              position: pickup!,
                               draggable: true,
-                              onDragEnd: (newPosition) {
-                                setState(() {
-                                  pickedLocation = newPosition;
-                                });
-                              },
+                            
                             ),
                           // Add marker for destination location
-                          if (pickedLocation != null)
+                          if (destinationLocation != null)
                             Marker(
+                              infoWindow: InfoWindow(
+                                title: "Destination-location"
+                              ),
                               markerId: MarkerId('destination-location'),
-                              position: pickedLocation!,
+                              position: destinationLocation!,
                               draggable: true,
                               onDragEnd: (newPosition) {
                                 setState(() {
-                                  pickedLocation = newPosition;
+                                  destinationLocation = newPosition;
                                 });
                               },
                             ),
@@ -238,16 +288,31 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                       ),
                     ),
                     SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (pickedLocation != null) {
-                          _endLocationController.text =
-                              "${pickedLocation!.latitude}, ${pickedLocation!.longitude}";
+                    GestureDetector(
+                      onTap: () async{
+                       
+                        if (destinationLocation != null) {
+                      List<Placemark> placemarks = await placemarkFromCoordinates(
+          destinationLocation!.latitude,
+          destinationLocation!.longitude,
+        );
+        Placemark place = placemarks.first;
+         _endLocationController.text = "${place.name}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
+                          
                         }
                         Navigator.of(context).pop(); // Close the bottom sheet
+                        
                       },
-                      child: Text('Set Destination Point'),
-                    ),
+                      child: Container(
+                        alignment: Alignment.center,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.green[400],
+                          borderRadius: BorderRadius.circular(5),
+
+                        ),child: Text("Confirm", style: TextStyle(color: Colors.white, fontSize:16, fontWeight:FontWeight.bold),)
+                      ),
+                    )
                   ],
                 ),
               ),
@@ -259,7 +324,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
   }
 
 // Helper function to get pickup location
-  LatLng? getPickupLocation() {
+  LatLng? getLocationPoints() {
     final String pickupLocationText = _startLocationController.text;
     if (pickupLocationText.isNotEmpty) {
       List<String> coordinates = pickupLocationText.split(',');
@@ -271,6 +336,8 @@ class _DriverManageStopsState extends State<DriverManageStops> {
     }
     return null;
   }
+
+
 
   void selectLocation(int index) {
     LatLng? pickedLocation; // Variable to store the picked location
@@ -375,15 +442,26 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.025),
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: Text(
-                    'Stops',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: screenWidth * 0.08,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Stops',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: screenWidth * 0.08,
+                      ),
                     ),
-                  ),
+                    Text(
+                      'Click on location icon to open maps',
+                      style: TextStyle(
+                      
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[600]
+                      ),
+                    ),
+                  ],
                 ),
                 SizedBox(height: screenHeight * 0.025),
                 CustomFields(
@@ -399,7 +477,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                   ),
                   isPassword: false,
                   controller: _startLocationController,
-                  keyboardType: TextInputType.name,
+                  keyboardType: TextInputType.none,
                   text: 'Pickup',
                   validator: (value) {
                     if (value!.isEmpty) {
@@ -419,7 +497,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                   ),
                   isPassword: false,
                   controller: _endLocationController,
-                  keyboardType: TextInputType.name,
+                  keyboardType: TextInputType.none,
                   text: 'Destination',
                   validator: (value) {
                     if (value!.isEmpty) {
