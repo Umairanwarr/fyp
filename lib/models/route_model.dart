@@ -63,6 +63,7 @@ class Stop {
   Map<String, dynamic> toJson() {
     return {
       'stopName': stopName,
+      'stopLocation': stopLocation,
       'time': time,
     };
   }

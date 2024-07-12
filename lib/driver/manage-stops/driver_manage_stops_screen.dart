@@ -82,11 +82,13 @@ Set<Marker> markers = {};
         endLocation: _endLocationController.text,
         totalStops: totalStops,
         stops: List.generate(totalStops, (index) {
+
           return Stop(
             stopName: _stopNameControllers[index].text,
             time: _timeControllers[index].text,
             stopLocation: _stopLocationControllers[index].text,
           );
+          
         }),
       );
 
