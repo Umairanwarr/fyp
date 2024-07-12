@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:first_bus_project/models/route_model.dart';
@@ -9,6 +12,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 
 class DriverManageStops extends StatefulWidget {
   final UserModel userModel;
@@ -26,6 +31,7 @@ class DriverManageStops extends StatefulWidget {
 
 class _DriverManageStopsState extends State<DriverManageStops> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final Completer<GoogleMapController> _controller = Completer();
   late TextEditingController _startLocationController;
   late TextEditingController _endLocationController;
   late TextEditingController _totalStopsController;
@@ -36,6 +42,8 @@ class _DriverManageStopsState extends State<DriverManageStops> {
   Marker? destMarker;
   Set<Marker> markers = {};
   List<LatLng> stops = [];
+  LatLng? currentLocation;
+  GoogleMapController? mapController;
 
   List<LatLng> polylineCoordinates = [];
 
@@ -66,6 +74,29 @@ class _DriverManageStopsState extends State<DriverManageStops> {
         .toList();
 
     super.initState();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    setState(() {
+      currentLocation = LatLng(position.latitude, position.longitude);
+    });
+  }
+
+  void _onFabPressed() async {
+    await _getCurrentLocation();
+    mapController?.animateCamera(
+      CameraUpdate.newLatLngZoom(currentLocation!, 11),
+    );
+  }
+
+  Future<Position> getUserCurrentLocation() async {
+    await Geolocator.requestPermission().then((value) {
+      print('error');
+    });
+    return await Geolocator.getCurrentPosition();
   }
 
   @override
@@ -145,13 +176,22 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                               fontWeight: FontWeight.bold),
                         ),
                         IconButton(
-                            onPressed: () {
-                              Navigator.pop(context);
+                            onPressed: () async {
+                              _onFabPressed();
                             },
                             icon: Icon(
-                              Icons.close,
+                              Icons.room,
                               color: Colors.red,
-                            ))
+                            )),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          icon: Icon(
+                            Icons.close,
+                            color: Colors.red,
+                          ),
+                        ),
                       ],
                     ),
                     SizedBox(height: 10.0),
@@ -168,7 +208,8 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                               borderRadius: BorderRadius.circular(10),
                               child: GoogleMap(
                                 initialCameraPosition: CameraPosition(
-                                  target: LatLng(37.7749, -122.4194),
+                                  target: currentLocation ??
+                                      LatLng(37.7749, -122.4194),
                                   zoom: 11,
                                 ),
                                 onTap: (LatLng position) {
@@ -207,8 +248,11 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                                       draggable: true,
                                     ),
                                 },
-                                onMapCreated:
-                                    (GoogleMapController controller) {},
+                                onMapCreated: (GoogleMapController controller) {
+                                  setState(() {
+                                    mapController = controller;
+                                  });
+                                },
                                 gestureRecognizers: Set()
                                   ..add(Factory<PanGestureRecognizer>(
                                     () => PanGestureRecognizer(),
@@ -285,9 +329,17 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               color: Colors.black,
-                              fontSize: 14,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold),
                         ),
+                        IconButton(
+                            onPressed: () {
+                              _onFabPressed();
+                            },
+                            icon: Icon(
+                              Icons.room,
+                              color: Colors.red,
+                            )),
                         IconButton(
                             onPressed: () {
                               Navigator.pop(context);
@@ -295,7 +347,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                             icon: Icon(
                               Icons.close,
                               color: Colors.red,
-                            ))
+                            )),
                       ],
                     ),
                     SizedBox(height: 8.0),
@@ -345,7 +397,11 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                                   draggable: true,
                                 ),
                             },
-                            onMapCreated: (GoogleMapController controller) {},
+                            onMapCreated: (GoogleMapController controller) {
+                              setState(() {
+                                mapController = controller;
+                              });
+                            },
                             gestureRecognizers: Set()
                               ..add(Factory<PanGestureRecognizer>(
                                 () => PanGestureRecognizer(),
@@ -416,12 +472,21 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Set Your Destination Point',
+                          'Set Your Stops',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.black,
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            _onFabPressed();
+                          },
+                          icon: Icon(
+                            Icons.room,
+                            color: Colors.red,
                           ),
                         ),
                         IconButton(
@@ -457,7 +522,11 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                               });
                             },
                             markers: markers,
-                            onMapCreated: (GoogleMapController controller) {},
+                            onMapCreated: (GoogleMapController controller) {
+                              setState(() {
+                                mapController = controller;
+                              });
+                            },
                             gestureRecognizers: Set()
                               ..add(
                                 Factory<PanGestureRecognizer>(
@@ -543,13 +612,22 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                         ),
                         IconButton(
                           onPressed: () {
+                            _onFabPressed();
+                          },
+                          icon: Icon(
+                            Icons.room,
+                            color: Colors.red,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
                             Navigator.pop(context);
                           },
                           icon: Icon(
                             Icons.close,
                             color: Colors.red,
                           ),
-                        )
+                        ),
                       ],
                     ),
                     SizedBox(height: 10.0),
@@ -562,21 +640,30 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                           borderRadius: BorderRadius.circular(10),
                           child: GoogleMap(
                             initialCameraPosition: CameraPosition(
-                              target: LatLng(
-                                37.7749,
-                                -122.4194,
-                              ),
+                              target: LatLng(37.7749, -122.4194),
                               zoom: 11,
                             ),
-                            markers: markers.toSet(),
+                            markers: markers,
                             polylines: _createPolylines(),
-                            onMapCreated: (GoogleMapController controller) {},
-                            gestureRecognizers: Set()
-                              ..add(
-                                Factory<PanGestureRecognizer>(
-                                  () => PanGestureRecognizer(),
-                                ),
-                              ),
+                            onMapCreated: (GoogleMapController controller) {
+                              mapController = controller;
+                            },
+                            onTap: (LatLng position) {
+                              setState(() {
+                                if (pickup == null) {
+                                  pickup = position;
+                                  _addMarker(position, 'Pickup');
+                                } else if (destination == null) {
+                                  destination = position;
+                                  _addMarker(position, 'Destination');
+                                  _fetchRoute(
+                                      pickup!.latitude,
+                                      pickup!.longitude,
+                                      destination!.latitude,
+                                      destination!.longitude);
+                                }
+                              });
+                            },
                           ),
                         ),
                       ),
@@ -659,6 +746,100 @@ class _DriverManageStopsState extends State<DriverManageStops> {
       setState(() {
         _createPolylines();
       });
+    });
+  }
+
+  void _addMarker(LatLng position, String title) {
+    setState(() {
+      markers.add(
+        Marker(
+          markerId: MarkerId(title),
+          position: position,
+          infoWindow: InfoWindow(title: title),
+        ),
+      );
+    });
+  }
+
+  void addPolyline() {
+    if (polylineCoordinates.isNotEmpty) {
+      markers.add(
+        Marker(
+          markerId: MarkerId('route'),
+          position: polylineCoordinates.first,
+        ),
+      );
+    }
+  }
+
+  Future<void> _fetchRoute(
+      double startLat, double startLon, double endLat, double endLon) async {
+    final apiKey = 'AIzaSyA7cE8WGvcgtU-3eci8pkt3KBjE-tE1Yzc';
+    final url = 'https://maps.googleapis.com/maps/api/directions/json?'
+        'origin=$startLat,$startLon&'
+        'destination=$endLat,$endLon&'
+        'key=$apiKey';
+    final response = await http.get(Uri.parse(url));
+    final data = json.decode(response.body);
+
+    if (data['status'] == 'OK') {
+      final List<dynamic> routes = data['routes'];
+      if (routes.isNotEmpty) {
+        final String points = routes[0]['overview_polyline']['points'];
+        polylineCoordinates = _convertToLatLng(_decodePoly(points));
+
+        setState(() {
+          if (polylineCoordinates.isNotEmpty) {
+            _addPolyline();
+          }
+        });
+      }
+    }
+  }
+
+  List<LatLng> _convertToLatLng(List points) {
+    List<LatLng> result = [];
+    for (int i = 0; i < points.length; i++) {
+      if (i % 2 != 0) {
+        result.add(LatLng(points[i - 1], points[i]));
+      }
+    }
+    return result;
+  }
+
+  List _decodePoly(String poly) {
+    var list = poly.codeUnits;
+    var lList = [];
+    int index = 0;
+    int len = poly.length;
+    int c = 0;
+    do {
+      var shift = 0;
+      int result = 0;
+      do {
+        c = list[index] - 63;
+        result |= (c & 0x1F) << (shift * 5);
+        index++;
+        shift++;
+      } while (c >= 32);
+      if (result & 1 == 1) {
+        result = ~result;
+      }
+      var result1 = (result >> 1) * 0.00001;
+      lList.add(result1);
+    } while (index < len);
+    for (var i = 2; i < lList.length; i++) lList[i] += lList[i - 2];
+    return lList;
+  }
+
+  void _addPolyline() {
+    setState(() {
+      markers.add(
+        Marker(
+          markerId: MarkerId('route'),
+          position: polylineCoordinates.first,
+        ),
+      );
     });
   }
 

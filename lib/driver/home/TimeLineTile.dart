@@ -21,7 +21,7 @@ class TimeLineTileWidget extends StatelessWidget {
       indicatorStyle: IndicatorStyle(
         width: 20,
         color: Colors.black,
-        padding: EdgeInsets.symmetric(horizontal: 8),
+        padding: EdgeInsets.symmetric(horizontal: 4),
         indicator: Container(
           decoration: BoxDecoration(
             color: Colors.black,
@@ -30,9 +30,6 @@ class TimeLineTileWidget extends StatelessWidget {
         ),
       ),
       endChild: Container(
-        constraints: const BoxConstraints(
-          minHeight: 50,
-        ),
         child: Align(
           alignment: Alignment.centerLeft,
           child: Container(
@@ -45,7 +42,7 @@ class TimeLineTileWidget extends StatelessWidget {
           ),
         ),
       ),
-      beforeLineStyle: const LineStyle(
+      beforeLineStyle: LineStyle(
         color: Colors.teal,
         thickness: 6,
       ),

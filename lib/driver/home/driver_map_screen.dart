@@ -70,7 +70,9 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
         ],
       ),
       body: SingleChildScrollView(
+        physics: BouncingScrollPhysics(),
         child: Container(
+          padding: EdgeInsets.all(10),
           child: Column(
             children: [
               Container(
@@ -90,23 +92,20 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
                       target: currentLocation ?? LatLng(37.7749, -122.4194),
                       zoom: 11,
                     ),
-                    markers: {
-                      if (currentLocation != null)
-                        Marker(
-                          markerId: MarkerId('current_location'),
-                          position: currentLocation!,
-                          infoWindow: InfoWindow(title: 'Current Location'),
-                        ),
-                    },
                   ),
                 ),
               ),
               Container(
-                padding: EdgeInsets.all(16),
+                padding: EdgeInsets.symmetric(vertical: 5),
                 child: Column(
                   children: [
                     TimeLineTileWidget(
                       isfirst: true,
+                      islast: false,
+                      text: 'Margalla hills - 723A\n7:30 am',
+                    ),
+                    TimeLineTileWidget(
+                      isfirst: false,
                       islast: false,
                       text: 'Margalla hills - 723A\n7:30 am',
                     ),
@@ -122,6 +121,7 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
           ),
         ),
       ),
+      // --------------------is screen pr camera animate ho rha. Us
       floatingActionButton: FloatingActionButton(
         onPressed: _onFabPressed,
         child: Icon(Icons.location_searching),
