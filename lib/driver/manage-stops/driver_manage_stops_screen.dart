@@ -40,7 +40,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
   int totalStops = 0;
   Set<Marker> markers = {};
   @override
-  void initState() {
+  void initState(){
     print("---------------------------${widget.busRouteModel!.startLocation}");
     print(widget.busRouteModel!.endLocation);
     _startLocationController =

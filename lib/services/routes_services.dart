@@ -31,15 +31,21 @@ class RoutesService {
 
     try {
                         
+DocumentSnapshot<Map<String, dynamic>> doc =
+      await FirebaseFirestore.instance.collection('busRoutes').doc(userId).get();
 
-      DocumentSnapshot doc =
-          await _firestore.collection('busRoutes').doc(userId).get();
       if (doc.exists) {
-        print("---------------------------${doc.data()}");
+        // print("---------------------------${doc.data()}");
+        String end = doc['endLocation'];
+        
+     BusRouteModel bus = BusRouteModel.fromFirestore(doc.data()!, doc.id);
+     print("---------------------------${doc['endLocation']}");
+    print("---------------------------${bus.endLocation}");
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Bus route fetched successfully')),
         );
-        return BusRouteModel.fromJson(doc.data() as Map<String, dynamic>);
+
+        return bus;
       } else {
         
         return BusRouteModel.empty();
