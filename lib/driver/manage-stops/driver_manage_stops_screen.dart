@@ -31,6 +31,9 @@ class _DriverManageStopsState extends State<DriverManageStops> {
   late TextEditingController _totalStopsController;
    LatLng? pickup;
    LatLng? destination;
+   LatLng? stop;
+   Marker? pickupMarker;
+   Marker? destMarker;
   List<TextEditingController> _stopNameControllers = [];
   List<TextEditingController> _timeControllers = [];
   List<TextEditingController> _stopLocationControllers = [];
@@ -71,6 +74,8 @@ Set<Marker> markers = {};
   }
 
   void update() async {
+
+
     if (_formKey.currentState!.validate()) {
       final busRoute = BusRouteModel(
         startLocation: _startLocationController.text,
@@ -144,7 +149,17 @@ Set<Marker> markers = {};
                           setState(() {
                             pickedLocation = position;
                             pickup = position;
+                            pickupMarker = Marker(
+                            infoWindow: InfoWindow(
+                                title: "pickup-location"
+                              ),
+                              markerId: MarkerId('pick up location'),
+                              position: pickup!,
+                              draggable: true,
+                            );
+                            
                           });
+                          setMarker(pickup!, "pickup-location");
                         },
                         markers: {
                           if(pickup != null) 
@@ -212,7 +227,7 @@ Set<Marker> markers = {};
   
 
   void getDestination() {
-    LatLng? destinationLocation = getLocationPoints(); // Variable to store the picked location
+    LatLng? destinationLocation ; // Variable to store the picked location
 
   
 
@@ -250,7 +265,17 @@ Set<Marker> markers = {};
                           setState(() {
                             destinationLocation = position;
                             destination = position;
+                             destMarker =  Marker(
+                            infoWindow: InfoWindow(
+                                title: "Destination-location"
+                              ),
+                              markerId: MarkerId('Destination-location'),
+                              position: destination!,
+                              draggable: true,
+                            );
+
                           });
+                          setMarker(destination!, "destination-location");
                         },
                         markers: {
                           // Add marker for pickup location if available
@@ -266,18 +291,14 @@ Set<Marker> markers = {};
                             ),
                           // Add marker for destination location
                           if (destinationLocation != null)
-                            Marker(
+                          Marker(
                               infoWindow: InfoWindow(
-                                title: "Destination-location"
+                                title: "destination-location"
                               ),
                               markerId: MarkerId('destination-location'),
-                              position: destinationLocation!,
+                              position: destination!,
                               draggable: true,
-                              onDragEnd: (newPosition) {
-                                setState(() {
-                                  destinationLocation = newPosition;
-                                });
-                              },
+                            
                             ),
                         },
                         onMapCreated: (GoogleMapController controller) {},
@@ -323,24 +344,30 @@ Set<Marker> markers = {};
     );
   }
 
-// Helper function to get pickup location
-  LatLng? getLocationPoints() {
-    final String pickupLocationText = _startLocationController.text;
-    if (pickupLocationText.isNotEmpty) {
-      List<String> coordinates = pickupLocationText.split(',');
-      if (coordinates.length == 2) {
-        double lat = double.tryParse(coordinates[0].trim()) ?? 0.0;
-        double lng = double.tryParse(coordinates[1].trim()) ?? 0.0;
-        return LatLng(lat, lng);
-      }
-    }
-    return null;
-  }
+setMarker(LatLng point, String name){
+  setState((){
+markers.add(
+  Marker(
+                            infoWindow: InfoWindow(
+                                title: "$name"
+                              ),
+                              markerId: MarkerId('$name'),
+                              position: point,
+                              draggable: true,
+                            ),
+);
+  });
+
+}
+
+///// ----------- Poly lines here between variable - pickup & detination-------------------------
+  
 
 
 
   void selectLocation(int index) {
-    LatLng? pickedLocation; // Variable to store the picked location
+     // Variable to store the picked location
+LatLng? stopLocation ;
 
     showModalBottomSheet(
       context: context,
@@ -351,13 +378,21 @@ Set<Marker> markers = {};
               behavior: HitTestBehavior.opaque,
               onTap: () {}, // Prevents dismissing bottom sheet on tap
               child: Container(
+                color: Colors.white,
                 padding: EdgeInsets.all(16.0),
                 height: 400,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    Center(child: Text("Pick up Point ${index + 1}")),
-                    SizedBox(height: 8.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Set Your Destination Point', textAlign: TextAlign.center,style: TextStyle(color: Colors.black, fontSize:16, fontWeight:FontWeight.bold),),
+                        IconButton(onPressed: () {
+                          Navigator.pop(context);
+                        }, icon: Icon(Icons.close, color: Colors.red, ))
+                      ],
+                    ),                    SizedBox(height: 8.0),
                     Expanded(
                       child: GoogleMap(
                         initialCameraPosition: CameraPosition(
@@ -365,24 +400,17 @@ Set<Marker> markers = {};
                           zoom: 12,
                         ),
                         onTap: (LatLng position) {
-                          setState(() {
-                            pickedLocation = position;
-                          });
+                       
+                           
+                           setState((){
+                            stopLocation = position;
+                            stop = position;
+                           });
+                           setMarker(stop!, "Stop - ${index+1}");
+                            
+                          
                         },
-                        markers: pickedLocation != null
-                            ? Set.of([
-                                Marker(
-                                  markerId: MarkerId('pickup-location-$index'),
-                                  position: pickedLocation!,
-                                  draggable: true,
-                                  onDragEnd: (newPosition) {
-                                    setState(() {
-                                      pickedLocation = newPosition;
-                                    });
-                                  },
-                                ),
-                              ])
-                            : Set(),
+                        markers: markers,
                         onMapCreated: (GoogleMapController controller) {},
                         gestureRecognizers: Set()
                           ..add(Factory<PanGestureRecognizer>(
@@ -391,16 +419,31 @@ Set<Marker> markers = {};
                       ),
                     ),
                     SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (pickedLocation != null) {
-                          _stopLocationControllers[index].text =
-                              "${pickedLocation!.latitude}, ${pickedLocation!.longitude}";
+                    GestureDetector(
+                      onTap: () async{
+                       
+                        if (stopLocation != null) {
+                      List<Placemark> placemarks = await placemarkFromCoordinates(
+          stopLocation!.latitude,
+          stopLocation!.longitude,
+        );
+        Placemark place = placemarks.first;
+         _stopLocationControllers[index].text = "${place.name}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
+                          print(_stopLocationControllers[index].text);
                         }
                         Navigator.of(context).pop(); // Close the bottom sheet
+                        
                       },
-                      child: Text('Set Pick Up Point ${index + 1}'),
-                    ),
+                      child: Container(
+                        alignment: Alignment.center,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.green[400],
+                          borderRadius: BorderRadius.circular(5),
+
+                        ),child: Text("Confirm", style: TextStyle(color: Colors.white, fontSize:16, fontWeight:FontWeight.bold),)
+                      ),
+                    )
                   ],
                 ),
               ),
@@ -570,10 +613,7 @@ Set<Marker> markers = {};
                                     SizedBox(
                                       width: screenWidth * 0.5,
                                       child: CustomFields(
-                                        icon: const Icon(
-                                          Icons.location_pin,
-                                          color: Colors.grey,
-                                        ),
+                                        
                                         isPassword: false,
                                         controller: _stopNameControllers[index],
                                         keyboardType: TextInputType.name,
@@ -590,10 +630,7 @@ Set<Marker> markers = {};
                                     SizedBox(
                                       width: screenWidth * 0.5,
                                       child: CustomFields(
-                                        icon: const Icon(
-                                          Icons.location_pin,
-                                          color: Colors.grey,
-                                        ),
+                                        
                                         isPassword: false,
                                         controller: _timeControllers[index],
                                         keyboardType: TextInputType.name,
@@ -657,5 +694,9 @@ Set<Marker> markers = {};
         ),
       ),
     );
+  }
+
+  showStopModel(BuildContext context){
+
   }
 }

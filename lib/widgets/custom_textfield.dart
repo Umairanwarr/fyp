@@ -8,7 +8,7 @@ class CustomFields extends StatelessWidget {
     this.validator,
     required this.isPassword,
     required this.keyboardType,
-    required this.icon,
+     this.icon,
   });
 
   final TextEditingController controller;
