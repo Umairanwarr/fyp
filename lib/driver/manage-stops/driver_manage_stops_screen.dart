@@ -584,6 +584,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                     SizedBox(height: 10),
                     GestureDetector(
                       onTap: () async {
+                        update();
                         Navigator.of(context).pop();
                       },
                       child: Container(

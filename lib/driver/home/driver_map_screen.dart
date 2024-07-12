@@ -2,7 +2,6 @@ import 'package:first_bus_project/driver/home/TimeLineTile.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:timeline_tile/timeline_tile.dart';
 import 'package:first_bus_project/driver/menu/driver_menu.dart';
 import 'package:first_bus_project/models/route_model.dart';
 import 'package:first_bus_project/models/user_model.dart';
