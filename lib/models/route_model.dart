@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class BusRouteModel {
+
   String startLocation;
   String endLocation;
   int totalStops;
@@ -26,6 +29,17 @@ class BusRouteModel {
     );
   }
 
+  factory BusRouteModel.fromFirestore(Map<String, dynamic> data, String id) {
+    return BusRouteModel(
+      startLocation: data['startLocation'],
+      endLocation: data['endLocation'],
+      totalStops: data['totalStops'],
+      stops: (data['stops'] as List).map((i) => Stop.fromJson(i)).toList(),
+    );
+  }
+
+
+
   Map<String, dynamic> toJson() {
     return {
       'startLocation': startLocation,
@@ -40,23 +54,27 @@ class Stop {
   String stopName;
   String stopLocation;
   String time;
+  bool isReached = false;
 
   Stop({
     required this.stopName,
     required this.stopLocation,
     required this.time,
+    required this.isReached,
   });
 
   Stop.empty()
       : stopName = '',
         stopLocation = '',
-        time = '';
+        time = '',
+        isReached = false;
 
   factory Stop.fromJson(Map<String, dynamic> json) {
     return Stop(
       stopName: json['stopName'],
       stopLocation: json['stopLocation'],
       time: json['time'],
+      isReached: json['isReached'],
     );
   }
 
@@ -65,6 +83,7 @@ class Stop {
       'stopName': stopName,
       'stopLocation': stopLocation,
       'time': time,
+      'isReached':isReached,
     };
   }
 }

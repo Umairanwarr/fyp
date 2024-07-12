@@ -28,18 +28,20 @@ class RoutesService {
     BuildContext context,
     String userId,
   ) async {
+
     try {
+                        
+
       DocumentSnapshot doc =
-          await _firestore.collection('busroutes').doc(userId).get();
+          await _firestore.collection('busRoutes').doc(userId).get();
       if (doc.exists) {
+        print("---------------------------${doc.data()}");
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Bus route fetched successfully')),
         );
         return BusRouteModel.fromJson(doc.data() as Map<String, dynamic>);
       } else {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(content: Text('No bus route found for user: $userId')),
-        // );
+        
         return BusRouteModel.empty();
       }
     } catch (e) {

@@ -41,6 +41,9 @@ class _DriverManageStopsState extends State<DriverManageStops> {
 Set<Marker> markers = {};
   @override
   void initState() {
+
+    print("---------------------------${widget.busRouteModel!.startLocation}");
+    print(widget.busRouteModel!.endLocation);
     _startLocationController =
         TextEditingController(text: widget.busRouteModel!.startLocation);
     _endLocationController =
@@ -73,6 +76,8 @@ Set<Marker> markers = {};
     super.dispose();
   }
 
+ 
+
   void update() async {
 
 
@@ -87,6 +92,7 @@ Set<Marker> markers = {};
             stopName: _stopNameControllers[index].text,
             time: _timeControllers[index].text,
             stopLocation: _stopLocationControllers[index].text,
+            isReached: false,
           );
           
         }),

@@ -98,6 +98,8 @@ class AuthService {
     } else if (userModel.userType == 'Driver') {
       final BusRouteModel busRouteModel =
           await _routesService.getBusRoute(context, firebaseUser!.uid);
+              print("---------------------------${busRouteModel.startLocation}");
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
