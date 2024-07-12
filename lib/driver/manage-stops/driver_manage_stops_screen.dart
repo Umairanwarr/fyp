@@ -176,24 +176,26 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                               });
                               setMarker(pickup!, "pickup-location");
                             },
-                            markers: {
-                              if (pickup != null)
-                                Marker(
-                                  infoWindow:
-                                      InfoWindow(title: "pickup-location"),
-                                  markerId: MarkerId('pick up location'),
-                                  position: pickup!,
-                                  draggable: true,
-                                ),
-                              if (destination != null)
-                                Marker(
-                                  infoWindow:
-                                      InfoWindow(title: "Destination-location"),
-                                  markerId: MarkerId('Destination location'),
-                                  position: destination!,
-                                  draggable: true,
-                                ),
-                            },
+                           markers: {
+                          // Add marker for pickup location if available
+
+                          if(pickup != null) 
+                          Marker(
+                            infoWindow: InfoWindow(title: "pickup-location"),
+                            markerId: MarkerId('pickup-location'),
+                            position: pickup!,
+                            draggable: true,
+                          ),
+                          // Add marker for destination location
+                          if (destination != null)
+                            Marker(
+                              infoWindow:
+                                  InfoWindow(title: "destination-location"),
+                              markerId: MarkerId('destination-location'),
+                              position: destination!,
+                              draggable: true,
+                            ),
+                        },
                             onMapCreated: (GoogleMapController controller) {},
                             gestureRecognizers: Set()
                               ..add(Factory<PanGestureRecognizer>(
@@ -287,7 +289,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                       child: GoogleMap(
                         initialCameraPosition: CameraPosition(
                           target: LatLng(37.7749, -122.4194),
-                          zoom: 12,
+                          zoom: 15,
                         ),
                         onTap: (LatLng position) {
                           setState(() {
@@ -306,6 +308,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                         markers: {
                           // Add marker for pickup location if available
 
+                          if(pickup != null) 
                           Marker(
                             infoWindow: InfoWindow(title: "pickup-location"),
                             markerId: MarkerId('pickup-location'),
@@ -313,7 +316,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                             draggable: true,
                           ),
                           // Add marker for destination location
-                          if (destinationLocation != null)
+                          if (destination != null)
                             Marker(
                               infoWindow:
                                   InfoWindow(title: "destination-location"),
@@ -333,6 +336,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                     GestureDetector(
                       onTap: () async {
                         if (destinationLocation != null) {
+                          
                           List<Placemark> placemarks =
                               await placemarkFromCoordinates(
                             destinationLocation!.latitude,
@@ -429,7 +433,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                       child: GoogleMap(
                         initialCameraPosition: CameraPosition(
                           target: LatLng(37.7749, -122.4194),
-                          zoom: 12,
+                          zoom: 15,
                         ),
                         onTap: (LatLng position) {
                           setState(() {
