@@ -137,7 +137,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               color: Colors.black,
-                              fontSize: 16,
+                              fontSize: 14,
                               fontWeight: FontWeight.bold),
                         ),
                         IconButton(
@@ -157,50 +157,60 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                             borderRadius: BorderRadius.circular(10)),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(10),
-                          child: GoogleMap(
-                            initialCameraPosition: CameraPosition(
-                              target: LatLng(37.7749, -122.4194),
-                              zoom: 15,
-                            ),
-                            onTap: (LatLng position) {
-                              setState(() {
-                                pickedLocation = position;
-                                pickup = position;
-                                pickupMarker = Marker(
-                                  infoWindow:
-                                      InfoWindow(title: "pickup-location"),
-                                  markerId: MarkerId('pick up location'),
-                                  position: pickup!,
-                                  draggable: true,
-                                );
-                              });
-                              setMarker(pickup!, "pickup-location");
-                            },
-                           markers: {
-                          // Add marker for pickup location if available
+                          child: Container(
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10)),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: GoogleMap(
+                                initialCameraPosition: CameraPosition(
+                                  target: LatLng(37.7749, -122.4194),
+                                  zoom: 11,
+                                ),
+                                onTap: (LatLng position) {
+                                  setState(() {
+                                    pickedLocation = position;
+                                    pickup = position;
+                                    pickupMarker = Marker(
+                                      infoWindow:
+                                          InfoWindow(title: "pickup-location"),
+                                      markerId: MarkerId('pick up location'),
+                                      position: pickup!,
+                                      draggable: true,
+                                    );
+                                  });
+                                  setMarker(pickup!, "pickup-location");
+                                },
+                                markers: {
+                                  // Add marker for pickup location if available
 
-                          if(pickup != null) 
-                          Marker(
-                            infoWindow: InfoWindow(title: "pickup-location"),
-                            markerId: MarkerId('pickup-location'),
-                            position: pickup!,
-                            draggable: true,
-                          ),
-                          // Add marker for destination location
-                          if (destination != null)
-                            Marker(
-                              infoWindow:
-                                  InfoWindow(title: "destination-location"),
-                              markerId: MarkerId('destination-location'),
-                              position: destination!,
-                              draggable: true,
+                                  if (pickup != null)
+                                    Marker(
+                                      infoWindow:
+                                          InfoWindow(title: "pickup-location"),
+                                      markerId: MarkerId('pickup-location'),
+                                      position: pickup!,
+                                      draggable: true,
+                                    ),
+                                  // Add marker for destination location
+                                  if (destination != null)
+                                    Marker(
+                                      infoWindow: InfoWindow(
+                                          title: "destination-location"),
+                                      markerId:
+                                          MarkerId('destination-location'),
+                                      position: destination!,
+                                      draggable: true,
+                                    ),
+                                },
+                                onMapCreated:
+                                    (GoogleMapController controller) {},
+                                gestureRecognizers: Set()
+                                  ..add(Factory<PanGestureRecognizer>(
+                                    () => PanGestureRecognizer(),
+                                  )),
+                              ),
                             ),
-                        },
-                            onMapCreated: (GoogleMapController controller) {},
-                            gestureRecognizers: Set()
-                              ..add(Factory<PanGestureRecognizer>(
-                                () => PanGestureRecognizer(),
-                              )),
                           ),
                         ),
                       ),
@@ -271,7 +281,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               color: Colors.black,
-                              fontSize: 16,
+                              fontSize: 14,
                               fontWeight: FontWeight.bold),
                         ),
                         IconButton(
@@ -308,13 +318,13 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                         markers: {
                           // Add marker for pickup location if available
 
-                          if(pickup != null) 
-                          Marker(
-                            infoWindow: InfoWindow(title: "pickup-location"),
-                            markerId: MarkerId('pickup-location'),
-                            position: pickup!,
-                            draggable: true,
-                          ),
+                          if (pickup != null)
+                            Marker(
+                              infoWindow: InfoWindow(title: "pickup-location"),
+                              markerId: MarkerId('pickup-location'),
+                              position: pickup!,
+                              draggable: true,
+                            ),
                           // Add marker for destination location
                           if (destination != null)
                             Marker(
@@ -336,7 +346,6 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                     GestureDetector(
                       onTap: () async {
                         if (destinationLocation != null) {
-                          
                           List<Placemark> placemarks =
                               await placemarkFromCoordinates(
                             destinationLocation!.latitude,
@@ -535,7 +544,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                     Text(
                       'Click on location icon to open maps',
                       style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 8,
                           fontWeight: FontWeight.bold,
                           color: Colors.grey[600]),
                     ),
