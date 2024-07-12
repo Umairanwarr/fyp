@@ -34,13 +34,17 @@ class _DriverManageStopsState extends State<DriverManageStops> {
   LatLng? stop;
   Marker? pickupMarker;
   Marker? destMarker;
+  Set<Marker> markers = {};
+  List<LatLng> stops = [];
+
+  List<LatLng> polylineCoordinates = [];
+
   List<TextEditingController> _stopNameControllers = [];
   List<TextEditingController> _timeControllers = [];
   List<TextEditingController> _stopLocationControllers = [];
   int totalStops = 0;
-  Set<Marker> markers = {};
   @override
-  void initState(){
+  void initState() {
     print("---------------------------${widget.busRouteModel!.startLocation}");
     print(widget.busRouteModel!.endLocation);
     _startLocationController =
@@ -296,50 +300,58 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                     ),
                     SizedBox(height: 8.0),
                     Expanded(
-                      child: GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(37.7749, -122.4194),
-                          zoom: 15,
-                        ),
-                        onTap: (LatLng position) {
-                          setState(() {
-                            destinationLocation = position;
-                            destination = position;
-                            destMarker = Marker(
-                              infoWindow:
-                                  InfoWindow(title: "Destination-location"),
-                              markerId: MarkerId('Destination-location'),
-                              position: destination!,
-                              draggable: true,
-                            );
-                          });
-                          setMarker(destination!, "destination-location");
-                        },
-                        markers: {
-                          // Add marker for pickup location if available
+                      child: Container(
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10)),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: GoogleMap(
+                            initialCameraPosition: CameraPosition(
+                              target: LatLng(37.7749, -122.4194),
+                              zoom: 11,
+                            ),
+                            onTap: (LatLng position) {
+                              setState(() {
+                                destinationLocation = position;
+                                destination = position;
+                                destMarker = Marker(
+                                  infoWindow:
+                                      InfoWindow(title: "Destination-location"),
+                                  markerId: MarkerId('Destination-location'),
+                                  position: destination!,
+                                  draggable: true,
+                                );
+                              });
+                              setMarker(destination!, "destination-location");
+                            },
+                            markers: {
+                              // Add marker for pickup location if available
 
-                          if (pickup != null)
-                            Marker(
-                              infoWindow: InfoWindow(title: "pickup-location"),
-                              markerId: MarkerId('pickup-location'),
-                              position: pickup!,
-                              draggable: true,
-                            ),
-                          // Add marker for destination location
-                          if (destination != null)
-                            Marker(
-                              infoWindow:
-                                  InfoWindow(title: "destination-location"),
-                              markerId: MarkerId('destination-location'),
-                              position: destination!,
-                              draggable: true,
-                            ),
-                        },
-                        onMapCreated: (GoogleMapController controller) {},
-                        gestureRecognizers: Set()
-                          ..add(Factory<PanGestureRecognizer>(
-                            () => PanGestureRecognizer(),
-                          )),
+                              if (pickup != null)
+                                Marker(
+                                  infoWindow:
+                                      InfoWindow(title: "pickup-location"),
+                                  markerId: MarkerId('pickup-location'),
+                                  position: pickup!,
+                                  draggable: true,
+                                ),
+                              // Add marker for destination location
+                              if (destination != null)
+                                Marker(
+                                  infoWindow:
+                                      InfoWindow(title: "destination-location"),
+                                  markerId: MarkerId('destination-location'),
+                                  position: destination!,
+                                  draggable: true,
+                                ),
+                            },
+                            onMapCreated: (GoogleMapController controller) {},
+                            gestureRecognizers: Set()
+                              ..add(Factory<PanGestureRecognizer>(
+                                () => PanGestureRecognizer(),
+                              )),
+                          ),
+                        ),
                       ),
                     ),
                     SizedBox(height: 10),
@@ -355,7 +367,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                           _endLocationController.text =
                               "${place.name}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
                         }
-                        Navigator.of(context).pop(); // Close the bottom sheet
+                        Navigator.of(context).pop();
                       },
                       child: Container(
                           alignment: Alignment.center,
@@ -382,23 +394,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
     );
   }
 
-  setMarker(LatLng point, String name) {
-    setState(() {
-      markers.add(
-        Marker(
-          infoWindow: InfoWindow(title: "$name"),
-          markerId: MarkerId('$name'),
-          position: point,
-          draggable: true,
-        ),
-      );
-    });
-  }
-
-///// ----------- Poly lines here between variable - pickup & detination-------------------------
-
   void selectLocation(int index) {
-    // Variable to store the picked location
     LatLng? stopLocation;
 
     showModalBottomSheet(
@@ -408,7 +404,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
           builder: (BuildContext context, StateSetter setState) {
             return GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () {}, // Prevents dismissing bottom sheet on tap
+              onTap: () {},
               child: Container(
                 color: Colors.white,
                 padding: EdgeInsets.all(16.0),
@@ -423,40 +419,53 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                           'Set Your Destination Point',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold),
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         IconButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            icon: Icon(
-                              Icons.close,
-                              color: Colors.red,
-                            ))
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          icon: Icon(
+                            Icons.close,
+                            color: Colors.red,
+                          ),
+                        )
                       ],
                     ),
                     SizedBox(height: 8.0),
                     Expanded(
-                      child: GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(37.7749, -122.4194),
-                          zoom: 15,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        onTap: (LatLng position) {
-                          setState(() {
-                            stopLocation = position;
-                            stop = position;
-                          });
-                          setMarker(stop!, "Stop - ${index + 1}");
-                        },
-                        markers: markers,
-                        onMapCreated: (GoogleMapController controller) {},
-                        gestureRecognizers: Set()
-                          ..add(Factory<PanGestureRecognizer>(
-                            () => PanGestureRecognizer(),
-                          )),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: GoogleMap(
+                            initialCameraPosition: CameraPosition(
+                              target: LatLng(37.7749, -122.4194),
+                              zoom: 11,
+                            ),
+                            onTap: (LatLng position) {
+                              setState(() {
+                                stopLocation = position;
+                                stop = position;
+
+                                setMarker(stop!, "Stop - ${index + 1}");
+                              });
+                            },
+                            markers: markers,
+                            onMapCreated: (GoogleMapController controller) {},
+                            gestureRecognizers: Set()
+                              ..add(
+                                Factory<PanGestureRecognizer>(
+                                  () => PanGestureRecognizer(),
+                                ),
+                              ),
+                          ),
+                        ),
                       ),
                     ),
                     SizedBox(height: 10),
@@ -473,22 +482,24 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                               "${place.name}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
                           print(_stopLocationControllers[index].text);
                         }
-                        Navigator.of(context).pop(); // Close the bottom sheet
+                        Navigator.of(context).pop();
                       },
                       child: Container(
-                          alignment: Alignment.center,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: Colors.green[400],
-                            borderRadius: BorderRadius.circular(5),
+                        alignment: Alignment.center,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.green[400],
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          "Confirm",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
-                          child: Text(
-                            "Confirm",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold),
-                          )),
+                        ),
+                      ),
                     )
                   ],
                 ),
@@ -498,6 +509,156 @@ class _DriverManageStopsState extends State<DriverManageStops> {
         );
       },
     );
+  }
+
+// -----------------with PolyLines ----------------------------------------------
+  void polyLinesbwpickandDest() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {}, // Prevents dismissing bottom sheet on tap
+              child: Container(
+                color: Colors.white,
+                padding: EdgeInsets.all(16.0),
+                height: 500,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    SizedBox(height: 10.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Set Your Route',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          icon: Icon(
+                            Icons.close,
+                            color: Colors.red,
+                          ),
+                        )
+                      ],
+                    ),
+                    SizedBox(height: 10.0),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: GoogleMap(
+                            initialCameraPosition: CameraPosition(
+                              target: LatLng(
+                                37.7749,
+                                -122.4194,
+                              ),
+                              zoom: 11,
+                            ),
+                            markers: markers.toSet(),
+                            polylines: _createPolylines(),
+                            onMapCreated: (GoogleMapController controller) {},
+                            gestureRecognizers: Set()
+                              ..add(
+                                Factory<PanGestureRecognizer>(
+                                  () => PanGestureRecognizer(),
+                                ),
+                              ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: () async {
+                        Navigator.of(context).pop();
+                      },
+                      child: Container(
+                        alignment: Alignment.center,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.green[400],
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          "Confirm",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Set<Polyline> _createPolylines() {
+    Set<Polyline> polylines = {};
+
+    List<LatLng> allPoints = [];
+
+    if (pickup != null) {
+      allPoints.add(pickup!);
+    }
+
+    allPoints.addAll(stops);
+
+    if (destination != null) {
+      allPoints.add(destination!);
+    }
+
+    if (allPoints.length > 1) {
+      List<LatLng> polylinePoints = [];
+      for (int i = 0; i < allPoints.length; i++) {
+        polylinePoints.add(allPoints[i]);
+      }
+
+      polylines.add(Polyline(
+        polylineId: PolylineId('route'),
+        color: Colors.blue,
+        width: 5,
+        points: polylinePoints,
+      ));
+    }
+
+    return polylines;
+  }
+
+  void setMarker(LatLng point, String name) {
+    setState(() {
+      markers.add(
+        Marker(
+          markerId: MarkerId(name),
+          position: point,
+          infoWindow: InfoWindow(title: name),
+          draggable: true,
+        ),
+      );
+      setState(() {
+        _createPolylines();
+      });
+    });
   }
 
   @override
@@ -710,6 +871,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                                             children: [
                                               Text("Select location",
                                                   style: TextStyle(
+                                                      fontSize: 10,
                                                       color: Colors.white)),
                                               Icon(Icons.room,
                                                   color: Colors.white),
@@ -726,7 +888,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                       ),
                 SizedBox(height: screenHeight * 0.025),
                 CustomButton(
-                  onTap: update,
+                  onTap: polyLinesbwpickandDest,
                   text: 'Update',
                 ),
                 SizedBox(height: screenHeight * 0.025),
