@@ -83,8 +83,9 @@ class _DriverManageStopsState extends State<DriverManageStops> {
         // destination = widget.busRouteModel!.startCords;
         pickupMarker = Marker(markerId: MarkerId("pickup"),position: pickup! );
         destMarker = Marker(markerId: MarkerId("Destination"),position: destination! );
+        
         for (var stop in widget.busRouteModel!.stops) {
-       
+       stops.add(stop.stopCords);
     setMarker(stop.stopCords, stop.stopName, stop.time);
   }
   
