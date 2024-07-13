@@ -27,7 +27,6 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
   LatLng? currentLocation;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-
   @override
   void initState() {
     super.initState();
@@ -35,10 +34,7 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
     _getCurrentLocation();
   }
 
-
- 
   final RoutesService _routesService = RoutesService();
-   
 
   Future<void> _getCurrentLocation() async {
     Position position = await Geolocator.getCurrentPosition(
@@ -79,59 +75,63 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
           )
         ],
       ),
-      body: SingleChildScrollView(
-        physics: BouncingScrollPhysics(),
-        child: Container(
-          padding: EdgeInsets.all(10),
-          child: Column(
-            children: [
-              Container(
-                height: MediaQuery.of(context).size.height * 0.5,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+      body: Column(
+        children: [
+          Container(
+            height: MediaQuery.of(context).size.height * 0.5,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: GoogleMap(
+                onMapCreated: (GoogleMapController controller) {
+                  setState(() {
+                    mapController = controller;
+                  });
+                },
+                initialCameraPosition: CameraPosition(
+                  target: currentLocation ?? LatLng(37.7749, -122.4194),
+                  zoom: 11,
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: GoogleMap(
-                    onMapCreated: (GoogleMapController controller) {
-                      setState(() {
-                        mapController = controller;
-                      });
-                    },
-                    initialCameraPosition: CameraPosition(
-                      target: currentLocation ?? LatLng(37.7749, -122.4194),
-                      zoom: 11,
-                    ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(10),
+                  child: Column(
+                    children: [
+                      TimeLineTileWidget(
+                        isfirst: true,
+                        islast: false,
+                        text: 'Margalla hills - 723A\n7:30 am',
+                      ),
+                      TimeLineTileWidget(
+                        isfirst: false,
+                        islast: false,
+                        text: 'Margalla hills - 723A\n7:30 am',
+                      ),
+                      TimeLineTileWidget(
+                        isfirst: false,
+                        islast: false,
+                        text: 'Margalla hills - 723A\n7:30 am',
+                      ),
+                      TimeLineTileWidget(
+                        isfirst: false,
+                        islast: true,
+                        text: 'Margalla hills - 723A\n7:30 am',
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 5),
-                child: Column(
-                  children: [
-                    TimeLineTileWidget(
-                      isfirst: true,
-                      islast: false,
-                      text: 'Margalla hills - 723A\n7:30 am',
-                    ),
-                    TimeLineTileWidget(
-                      isfirst: false,
-                      islast: false,
-                      text: 'Margalla hills - 723A\n7:30 am',
-                    ),
-                    TimeLineTileWidget(
-                      isfirst: false,
-                      islast: true,
-                      text: 'Margalla hills - 723A\n7:30 am',
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
-      // --------------------is screen pr camera animate ho rha. Us
       floatingActionButton: FloatingActionButton(
         onPressed: _onFabPressed,
         child: Icon(Icons.location_searching),
