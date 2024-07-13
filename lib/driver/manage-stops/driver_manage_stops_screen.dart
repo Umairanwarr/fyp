@@ -3,8 +3,10 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:first_bus_project/driver/home/driver_map_screen.dart';
 import 'package:first_bus_project/models/route_model.dart';
 import 'package:first_bus_project/models/user_model.dart';
+import 'package:first_bus_project/splash_screen.dart';
 import 'package:first_bus_project/widgets/custom_button.dart';
 import 'package:first_bus_project/widgets/custom_textfield.dart';
 import 'package:flutter/foundation.dart';
@@ -88,10 +90,12 @@ class _DriverManageStopsState extends State<DriverManageStops> {
 
       for (var stop in widget.busRouteModel!.stops) {
         stops.add(stop.stopCords);
-        setMarker(stop.stopCords, stop.stopName, stop.time,
-            BitmapDescriptor.defaultMarkerWithHue(
-                                      BitmapDescriptor
-                                          .hueBlue),);
+        setMarker(
+          stop.stopCords,
+          stop.stopName,
+          stop.time,
+          BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+        );
       }
 
       totalMarkers.add(destMarker!);
@@ -785,6 +789,11 @@ class _DriverManageStopsState extends State<DriverManageStops> {
 
                         await update();
                         Navigator.of(context).pop();
+
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => SplashScreen()),
+                        );
                       },
                       child: Container(
                         alignment: Alignment.center,
@@ -1211,7 +1220,9 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                       ),
                 SizedBox(height: screenHeight * 0.025),
                 CustomButton(
-                  onTap: polyLinesbwpickandDest,
+                  onTap: () {
+                    polyLinesbwpickandDest();
+                  },
                   text: 'Update',
                 ),
                 SizedBox(height: screenHeight * 0.025),

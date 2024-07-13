@@ -28,36 +28,43 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   Marker? pickupMarker;
   Marker? destMarker;
-List<LatLng> allCords = [];
- LatLng? pickup,destination;
- Set<Marker> totalMarkers = {};
- Set<Marker> stopMarkers = {};
+  List<LatLng> allCords = [];
+  LatLng? pickup, destination;
+  Set<Marker> totalMarkers = {};
+  Set<Marker> stopMarkers = {};
   @override
   void initState() {
     super.initState();
     allCords.add(widget.busRouteModel!.startCords);
-    for(var v in widget.busRouteModel!.stops){
-allCords.add(v.stopCords);
+    for (var v in widget.busRouteModel!.stops) {
+      allCords.add(v.stopCords);
     }
-    
+
     allCords.add(widget.busRouteModel!.endCords);
     pickup = widget.busRouteModel!.startCords;
-      destination = widget.busRouteModel!.endCords;
-    pickupMarker =
-          Marker(markerId: MarkerId("pickupLocation"),infoWindow: InfoWindow(title: "pickupLocation", ), position: pickup!);
-      destMarker =
-          Marker(markerId: MarkerId("destLocation"),infoWindow: InfoWindow(title: "destination"), position: destination!);
+    destination = widget.busRouteModel!.endCords;
+    pickupMarker = Marker(
+        markerId: MarkerId("pickupLocation"),
+        infoWindow: InfoWindow(
+          title: "pickupLocation",
+        ),
+        position: pickup!);
+    destMarker = Marker(
+        markerId: MarkerId("destLocation"),
+        infoWindow: InfoWindow(title: "destination"),
+        position: destination!);
 
-          for (var stop in widget.busRouteModel!.stops) {
-     
-        setMarker(stop.stopCords, stop.stopName, stop.time,
-            BitmapDescriptor.defaultMarkerWithHue(
-                                      BitmapDescriptor
-                                          .hueBlue),);
-      }
-          totalMarkers.add(destMarker!);
-      totalMarkers.addAll(stopMarkers);
-      totalMarkers.add(pickupMarker!);
+    for (var stop in widget.busRouteModel!.stops) {
+      setMarker(
+        stop.stopCords,
+        stop.stopName,
+        stop.time,
+        BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+      );
+    }
+    totalMarkers.add(destMarker!);
+    totalMarkers.addAll(stopMarkers);
+    totalMarkers.add(pickupMarker!);
     _getCurrentLocation();
   }
 
@@ -148,6 +155,7 @@ allCords.add(v.stopCords);
       body: Column(
         children: [
           Container(
+            padding: EdgeInsets.symmetric(horizontal: 10),
             height: MediaQuery.of(context).size.height * 0.5,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
@@ -160,7 +168,7 @@ allCords.add(v.stopCords);
                     mapController = controller;
                   });
                 },
-                polylines:  _createPolylines(),
+                polylines: _createPolylines(),
                 markers: totalMarkers,
                 initialCameraPosition: CameraPosition(
                   target: currentLocation ?? LatLng(37.7749, -122.4194),
@@ -170,35 +178,29 @@ allCords.add(v.stopCords);
             ),
           ),
           Expanded(
-            child: ListView.builder(
-      padding: EdgeInsets.all(10),
-      itemCount: widget.busRouteModel!.totalStops,
-      itemBuilder: (context, index) {
-        final stop = widget.busRouteModel!.stops[index];
-        return TimeLineTileWidget(
-          isfirst: index == 0,
-          islast: index == widget.busRouteModel!.stops.length - 1,
-          text: '${stop.stopName}\n${stop.time}',
-        );
-      },
-    )
-          ),
+              child: ListView.builder(
+            padding: EdgeInsets.all(10),
+            itemCount: widget.busRouteModel!.totalStops,
+            itemBuilder: (context, index) {
+              final stop = widget.busRouteModel!.stops[index];
+              return TimeLineTileWidget(
+                isfirst: index == 0,
+                islast: index == widget.busRouteModel!.stops.length - 1,
+                text: '${stop.stopName}\n${stop.time}',
+              );
+            },
+          )),
         ],
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: _onFabPressed,
-      //   child: Icon(Icons.location_searching),
-      // ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _onFabPressed,
+        child: Icon(Icons.location_searching),
+      ),
     );
   }
 
-
-
-
-
-  
 // -----------------with PolyLines ----------------------------------------------
- 
+
   Set<Polyline> _createPolylines() {
     Set<Polyline> polylines = {};
 
@@ -221,5 +223,4 @@ allCords.add(v.stopCords);
 
     return polylines;
   }
-
 }

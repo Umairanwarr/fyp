@@ -12,6 +12,7 @@ analyzer:
     p ignorerefer_const_constructors: ignore
     prefer_const_constructors: ignore
     prefer_const_literals_to_create_immutables: ignore
+    unnecessary_null_comparison: ignore ignore
 include: package:flutter_lints/flutter.yaml
  ignore
 linter:

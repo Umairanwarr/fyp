@@ -113,6 +113,11 @@ class _StudentMapScreenState extends State<StudentMapScreen> {
                       ),
                       TimeLineTileWidget(
                         isfirst: false,
+                        islast: false,
+                        text: 'Margalla hills - 723A\n7:30 am',
+                      ),
+                      TimeLineTileWidget(
+                        isfirst: false,
                         islast: true,
                         text: 'Margalla hills - 723A\n7:30 am',
                       ),
