@@ -36,12 +36,17 @@ class _DriverManageStopsState extends State<DriverManageStops> {
   late TextEditingController _endLocationController;
   late TextEditingController _totalStopsController;
   LatLng? pickup;
+  BusRouteModel? bus;
   LatLng? destination;
   LatLng? stop;
   Marker? pickupMarker;
   Marker? destMarker;
-  Set<Marker> markers = {};
+  Set<Marker> stopMarkers = {};
+  Set<Marker> totalMarkers = {};
+  Set<Marker> polyMarkers = {};
+    Set<Marker> temp = {};
   List<LatLng> stops = [];
+  List<LatLng> allcords = [];
   LatLng? currentLocation;
   GoogleMapController? mapController;
 
@@ -53,15 +58,17 @@ class _DriverManageStopsState extends State<DriverManageStops> {
   int totalStops = 0;
   @override
   void initState() {
-    print("---------------------------${widget.busRouteModel!.startLocation}");
-    print(widget.busRouteModel!.endLocation);
+    if(widget.busRouteModel != null) {
+      pickup = widget.busRouteModel!.startCords;
+      destination = widget.busRouteModel!.endCords;
     _startLocationController =
         TextEditingController(text: widget.busRouteModel!.startLocation);
     _endLocationController =
         TextEditingController(text: widget.busRouteModel!.endLocation);
     _totalStopsController = TextEditingController(
         text: widget.busRouteModel!.totalStops.toString());
-
+// setMarker(widget.busRouteModel!.startCords, "Pickup-location" ,"");
+// setMarker(widget.busRouteModel!.endCords, "Destination-location", "");
     totalStops = widget.busRouteModel!.totalStops;
     _stopNameControllers = widget.busRouteModel!.stops
         .map((stop) => TextEditingController(text: stop.stopName))
@@ -72,9 +79,93 @@ class _DriverManageStopsState extends State<DriverManageStops> {
     _stopLocationControllers = widget.busRouteModel!.stops
         .map((stop) => TextEditingController(text: stop.stopLocation))
         .toList();
+        // pickup = widget.busRouteModel!.startCords;
+        // destination = widget.busRouteModel!.startCords;
+        pickupMarker = Marker(markerId: MarkerId("pickup"),position: pickup! );
+        destMarker = Marker(markerId: MarkerId("Destination"),position: destination! );
+        for (var stop in widget.busRouteModel!.stops) {
+       
+    setMarker(stop.stopCords, stop.stopName, stop.time);
+  }
+  
+  totalMarkers.add(destMarker!);
+    totalMarkers.addAll(stopMarkers);
+      totalMarkers.add(pickupMarker!);
+
+  
+  
+  temp.add(destMarker!);
+    temp.addAll(stopMarkers);
+ temp.add(pickupMarker!);
+
+  totalMarkerUpdate();
+  updateTempMarker();
+    }
 
     super.initState();
   }
+
+  void updateTempMarker() {
+    temp.clear();
+    allcords.clear();
+    allcords.add(destination!);
+    if (destMarker != null) temp.add(
+    Marker(
+                                      infoWindow:
+                                          InfoWindow(title: "destination-location"),
+                                      markerId: MarkerId('pick'),
+                                      position: destination!,
+                                      draggable: true,
+                                    )
+  );
+  
+      allcords.addAll(stops.reversed);
+
+  temp.addAll(stopMarkers);
+  
+
+      allcords.add(pickup!);
+
+  if (pickupMarker != null) temp.add(
+    Marker(
+                                      infoWindow:
+                                          InfoWindow(title: "pickup-location"),
+                                      markerId: MarkerId('pick'),
+                                      position: pickup!,
+                                      draggable: true,
+                                    )
+  );
+}
+
+void totalMarkerUpdate(){
+  allcords.clear();
+ totalMarkers.clear();
+      allcords.add(destination!);
+
+  if (destMarker != null) temp.add(
+    Marker(
+                                      infoWindow:
+                                          InfoWindow(title: "destination-location"),
+                                      markerId: MarkerId('pick'),
+                                      position: destination!,
+                                      draggable: true,
+                                    )
+  );
+      allcords.addAll(stops.reversed);
+    allcords.add(pickup!);
+
+  totalMarkers.addAll(stopMarkers);
+   if (pickupMarker != null) temp.add(
+    Marker(
+                                      infoWindow:
+                                          InfoWindow(title: "pickup-location"),
+                                      markerId: MarkerId('pick'),
+                                      position: pickup!,
+                                      draggable: true,
+                                    )
+  );
+  
+}
 
   Future<void> _getCurrentLocation() async {
     Position position = await Geolocator.getCurrentPosition(
@@ -110,17 +201,20 @@ class _DriverManageStopsState extends State<DriverManageStops> {
     super.dispose();
   }
 
-  void update() async {
+  Future update() async {
     if (_formKey.currentState!.validate()) {
       final busRoute = BusRouteModel(
         startLocation: _startLocationController.text,
         endLocation: _endLocationController.text,
+        startCords: LatLng(pickup!.latitude, pickup!.longitude),
+        endCords: LatLng(destination!.latitude, destination!.longitude),
         totalStops: totalStops,
         stops: List.generate(totalStops, (index) {
           return Stop(
             stopName: _stopNameControllers[index].text,
             time: _timeControllers[index].text,
             stopLocation: _stopLocationControllers[index].text,
+            stopCords: LatLng(stops[index].latitude, stops[index].longitude),
             isReached: false,
           );
         }),
@@ -216,15 +310,8 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                                   setState(() {
                                     pickedLocation = position;
                                     pickup = position;
-                                    pickupMarker = Marker(
-                                      infoWindow:
-                                          InfoWindow(title: "pickup-location"),
-                                      markerId: MarkerId('pick up location'),
-                                      position: pickup!,
-                                      draggable: true,
-                                    );
+                                   
                                   });
-                                  setMarker(pickup!, "pickup-location");
                                 },
                                 markers: {
                                   // Add marker for pickup location if available
@@ -276,6 +363,21 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                           _startLocationController.text =
                               "${place.name}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
                         }
+                        
+                        setState((){
+pickup = pickedLocation;
+
+                          pickupMarker = Marker(
+                                      infoWindow:
+                                          InfoWindow(title: "pickup-location"),
+                                      markerId: MarkerId('pick'),
+                                      position: pickup!,
+                                      draggable: true,
+                                    );
+                        });
+                        updateTempMarker();
+                        totalMarkerUpdate();
+                        
                         Navigator.of(context).pop(); // Close the bottom sheet
                       },
                       child: Container(
@@ -366,15 +468,8 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                               setState(() {
                                 destinationLocation = position;
                                 destination = position;
-                                destMarker = Marker(
-                                  infoWindow:
-                                      InfoWindow(title: "Destination-location"),
-                                  markerId: MarkerId('Destination-location'),
-                                  position: destination!,
-                                  draggable: true,
-                                );
+                                
                               });
-                              setMarker(destination!, "destination-location");
                             },
                             markers: {
                               // Add marker for pickup location if available
@@ -382,8 +477,8 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                               if (pickup != null)
                                 Marker(
                                   infoWindow:
-                                      InfoWindow(title: "pickup-location"),
-                                  markerId: MarkerId('pickup-location'),
+                                      InfoWindow(title: "Destination-location"),
+                                  markerId: MarkerId('Destination-location'),
                                   position: pickup!,
                                   draggable: true,
                                 ),
@@ -423,6 +518,18 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                           _endLocationController.text =
                               "${place.name}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
                         }
+                        setState((){
+                          destination = destinationLocation;
+                          destMarker = Marker(
+                                  infoWindow:
+                                      InfoWindow(title: "Destination-location"),
+                                  markerId: MarkerId('Destination-location'),
+                                  position: destination!,
+                                  draggable: true,
+                                );
+                                updateTempMarker();
+                                totalMarkerUpdate();
+                        });
                         Navigator.of(context).pop();
                       },
                       child: Container(
@@ -449,139 +556,168 @@ class _DriverManageStopsState extends State<DriverManageStops> {
       },
     );
   }
+void selectLocation(int index) {
+  LatLng? stopLocation;
 
-  void selectLocation(int index) {
-    LatLng? stopLocation;
-
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {},
-              child: Container(
-                color: Colors.white,
-                padding: EdgeInsets.all(16.0),
-                height: 400,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Set Your Stops',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
+  showModalBottomSheet(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {},
+            child: Container(
+              color: Colors.white,
+              padding: EdgeInsets.all(16.0),
+              height: 400,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Set Your Stops',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
                         ),
-                        IconButton(
-                          onPressed: () {
-                            _onFabPressed();
-                          },
-                          icon: Icon(
-                            Icons.room,
-                            color: Colors.red,
-                          ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          _onFabPressed();
+                        },
+                        icon: Icon(
+                          Icons.room,
+                          color: Colors.red,
                         ),
-                        IconButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          icon: Icon(
-                            Icons.close,
-                            color: Colors.red,
-                          ),
-                        )
-                      ],
-                    ),
-                    SizedBox(height: 8.0),
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        icon: Icon(
+                          Icons.close,
+                          color: Colors.red,
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: GoogleMap(
-                            initialCameraPosition: CameraPosition(
-                              target: LatLng(37.7749, -122.4194),
-                              zoom: 11,
-                            ),
-                            onTap: (LatLng position) {
-                              setState(() {
-                                stopLocation = position;
+                      )
+                    ],
+                  ),
+                  SizedBox(height: 8.0),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: GoogleMap(
+                          
+                          initialCameraPosition: CameraPosition(
+                            target: LatLng(37.7749, -122.4194),
+                            zoom: 11,
+                          ),
+                          onTap: (LatLng position) {
+                            setState(() {
+                              
+                              if(stops.contains(_stopNameControllers[index])){
+                                stops.remove(stop);
                                 stop = position;
+                                totalMarkerUpdate();
+stopLocation = position;
+                              
+                              }else{
 
-                                setMarker(stop!, "Stop - ${index + 1}");
-                              });
-                            },
-                            markers: markers,
-                            onMapCreated: (GoogleMapController controller) {
-                              setState(() {
-                                mapController = controller;
-                              });
-                            },
-                            gestureRecognizers: Set()
-                              ..add(
-                                Factory<PanGestureRecognizer>(
-                                  () => PanGestureRecognizer(),
-                                ),
+                                stops.add(position);
+                               
+stopLocation = position;
+                              stop = position;
+                               totalMarkerUpdate();
+                              }
+                              
+                              setMarker(stop!, "${_stopNameControllers[index].text}", "");
+                                updateTempMarker();
+                                totalMarkerUpdate();
+                              
+                            });
+                          },
+                          markers: temp,
+                          onMapCreated: (GoogleMapController controller) {
+                            setState(() {
+                              mapController = controller;
+                            });
+                          },
+                          gestureRecognizers: Set()
+                            ..add(
+                              Factory<PanGestureRecognizer>(
+                                () => PanGestureRecognizer(),
                               ),
-                          ),
+                            ),
                         ),
                       ),
                     ),
-                    SizedBox(height: 10),
-                    GestureDetector(
-                      onTap: () async {
-                        if (stopLocation != null) {
-                          List<Placemark> placemarks =
-                              await placemarkFromCoordinates(
-                            stopLocation!.latitude,
-                            stopLocation!.longitude,
-                          );
-                          Placemark place = placemarks.first;
-                          _stopLocationControllers[index].text =
-                              "${place.name}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
-                          print(_stopLocationControllers[index].text);
-                        }
-                        Navigator.of(context).pop();
-                      },
-                      child: Container(
-                        alignment: Alignment.center,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: Colors.green[400],
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Text(
-                          "Confirm",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  ),
+                  SizedBox(height: 10),
+                  GestureDetector(
+                    onTap: () async {
+                      if (stopLocation != null) {
+                        List<Placemark> placemarks =
+                            await placemarkFromCoordinates(
+                          stopLocation!.latitude,
+                          stopLocation!.longitude,
+                        );
+                        Placemark place = placemarks.first;
+                        _stopLocationControllers[index].text =
+                            "${place.name}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
+                        print(_stopLocationControllers[index].text);
+                      }
+                      
+                        
+                              updateTempMarker(); 
+                              
+                              totalMarkerUpdate();
+                      
+                      Navigator.of(context).pop();
+                    },
+                    child: Container(
+                      alignment: Alignment.center,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.green[400],
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Text(
+                        "Confirm",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    )
-                  ],
-                ),
+                    ),
+                  )
+                ],
               ),
-            );
-          },
-        );
-      },
-    );
-  }
-
+            ),
+          );
+        },
+      );
+    },
+  );
+}
 // -----------------with PolyLines ----------------------------------------------
   void polyLinesbwpickandDest() {
+    totalMarkers.add(pickupMarker!);
+    
+    for(var stop in stopMarkers){
+totalMarkers.add(stop);
+    }
+    totalMarkers.add(destMarker!);
+
+    print("--------------------------------${totalMarkers}");
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -639,31 +775,19 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: GoogleMap(
+                            
                             initialCameraPosition: CameraPosition(
                               target: LatLng(37.7749, -122.4194),
                               zoom: 11,
+                              
                             ),
-                            markers: markers,
+                            markers: totalMarkers,
+                            
                             polylines: _createPolylines(),
                             onMapCreated: (GoogleMapController controller) {
                               mapController = controller;
                             },
-                            onTap: (LatLng position) {
-                              setState(() {
-                                if (pickup == null) {
-                                  pickup = position;
-                                  _addMarker(position, 'Pickup');
-                                } else if (destination == null) {
-                                  destination = position;
-                                  _addMarker(position, 'Destination');
-                                  _fetchRoute(
-                                      pickup!.latitude,
-                                      pickup!.longitude,
-                                      destination!.latitude,
-                                      destination!.longitude);
-                                }
-                              });
-                            },
+                            
                           ),
                         ),
                       ),
@@ -671,7 +795,9 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                     SizedBox(height: 10),
                     GestureDetector(
                       onTap: () async {
-                        update();
+    print("--------------------------------${totalMarkers}");
+
+                        await update();
                         Navigator.of(context).pop();
                       },
                       child: Container(
@@ -705,16 +831,9 @@ class _DriverManageStopsState extends State<DriverManageStops> {
     Set<Polyline> polylines = {};
 
     List<LatLng> allPoints = [];
+    allPoints.addAll(allcords);
 
-    if (pickup != null) {
-      allPoints.add(pickup!);
-    }
-
-    allPoints.addAll(stops);
-
-    if (destination != null) {
-      allPoints.add(destination!);
-    }
+ 
 
     if (allPoints.length > 1) {
       List<LatLng> polylinePoints = [];
@@ -732,38 +851,45 @@ class _DriverManageStopsState extends State<DriverManageStops> {
 
     return polylines;
   }
+void setMarker(LatLng point, String name, String? time) {
+  final MarkerId markerId = MarkerId(name);
 
-  void setMarker(LatLng point, String name) {
-    setState(() {
-      markers.add(
+  // Convert stopMarkers Set to a List to find existing markers
+  List<Marker> markersList = stopMarkers.toList();
+
+  // Check if the marker with the given name already exists
+  int existingIndex = markersList.indexWhere((marker) => marker.markerId.value == name);
+
+  setState(() {
+    if (existingIndex != -1) {
+      // Update existing marker if found
+      markersList[existingIndex] = Marker(
+        markerId: MarkerId(name),
+        position: point,
+        infoWindow: (time != null) ? InfoWindow(title: name + time) : InfoWindow(title: name),
+        draggable: true,
+      );
+
+      // Convert back to Set after modification
+      stopMarkers = markersList.toSet();
+    } else {
+      // Add new marker if not found
+      stopMarkers.add(
         Marker(
           markerId: MarkerId(name),
           position: point,
-          infoWindow: InfoWindow(title: name),
+          infoWindow: (time != null) ? InfoWindow(title: name + time) : InfoWindow(title: name),
           draggable: true,
         ),
       );
-      setState(() {
-        _createPolylines();
-      });
-    });
-  }
+    }
+  });
+}
 
-  void _addMarker(LatLng position, String title) {
-    setState(() {
-      markers.add(
-        Marker(
-          markerId: MarkerId(title),
-          position: position,
-          infoWindow: InfoWindow(title: title),
-        ),
-      );
-    });
-  }
 
   void addPolyline() {
     if (polylineCoordinates.isNotEmpty) {
-      markers.add(
+      totalMarkers.add(
         Marker(
           markerId: MarkerId('route'),
           position: polylineCoordinates.first,
@@ -834,7 +960,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
 
   void _addPolyline() {
     setState(() {
-      markers.add(
+      polyMarkers.add(
         Marker(
           markerId: MarkerId('route'),
           position: polylineCoordinates.first,
@@ -937,137 +1063,158 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                   },
                 ),
                 SizedBox(height: screenHeight * 0.025),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Stops',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.025),
-                totalStops == 0
-                    ? TextFormField(
-                        controller: _totalStopsController,
-                        onFieldSubmitted: (value) {
-                          setState(() {
-                            totalStops = int.parse(value);
-                            _stopNameControllers = List.generate(
-                                totalStops, (index) => TextEditingController());
-                            _timeControllers = List.generate(
-                                totalStops, (index) => TextEditingController());
-                            _stopLocationControllers = List.generate(
-                                totalStops, (index) => TextEditingController());
-                          });
-                        },
-                        textInputAction: TextInputAction.done,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          suffixIcon: Icon(
-                            Icons.add_location,
-                            color: Colors.grey,
-                          ),
-                          labelText: 'Number of stops',
-                          labelStyle: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xffB81736),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(10),
-                            ),
-                          ),
-                        ),
+     Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    const Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        'Stops',
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+    totalStops == 0
+        ? Container()
+        : GestureDetector(
+            onTap: () {
+              setState(() {
+                totalStops++;
+                _stopNameControllers.add(TextEditingController());
+                _timeControllers.add(TextEditingController());
+                _stopLocationControllers.add(TextEditingController());
+              });
+            },
+            child: Text(
+              "+ Add new stop",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+  ],
+),
+SizedBox(height: screenHeight * 0.025),
+totalStops == 0
+    ? TextFormField(
+        controller: _totalStopsController,
+        onFieldSubmitted: (value) {
+          setState(() {
+            totalStops = int.parse(value);
+            _stopNameControllers = List.generate(
+                totalStops, (index) => TextEditingController());
+            _timeControllers = List.generate(
+                totalStops, (index) => TextEditingController());
+            _stopLocationControllers = List.generate(
+                totalStops, (index) => TextEditingController());
+          });
+        },
+        textInputAction: TextInputAction.done,
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(
+          suffixIcon: Icon(
+            Icons.add_location,
+            color: Colors.grey,
+          ),
+          labelText: 'Number of stops',
+          labelStyle: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xffB81736),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(10),
+            ),
+          ),
+        ),
+        validator: (value) {
+          if (value!.isEmpty) {
+            return 'Please enter the number of stops';
+          }
+          return null;
+        },
+      )
+    : Column(
+        children: List.generate(
+          totalStops,
+          (index) => Column(
+            children: [
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                   
+                    SizedBox(width:10),
+                    SizedBox(
+                      width: screenWidth * 0.5,
+                      child: CustomFields(
+                        isPassword: false,
+                        controller: _stopNameControllers[index],
+                        keyboardType: TextInputType.name,
+                        text: 'Stop Name',
                         validator: (value) {
                           if (value!.isEmpty) {
-                            return 'Please enter the number of stops';
+                            return 'Please enter the stop name';
                           }
                           return null;
                         },
-                      )
-                    : Column(
-                        children: List.generate(
-                          totalStops,
-                          (index) => Column(
-                            children: [
-                              SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  children: [
-                                    SizedBox(
-                                      width: screenWidth * 0.5,
-                                      child: CustomFields(
-                                        isPassword: false,
-                                        controller: _stopNameControllers[index],
-                                        keyboardType: TextInputType.name,
-                                        text: 'Stop Name',
-                                        validator: (value) {
-                                          if (value!.isEmpty) {
-                                            return 'Please enter the stop name';
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                    ),
-                                    SizedBox(width: 10),
-                                    SizedBox(
-                                      width: screenWidth * 0.5,
-                                      child: CustomFields(
-                                        isPassword: false,
-                                        controller: _timeControllers[index],
-                                        keyboardType: TextInputType.name,
-                                        text: 'Stop Time',
-                                        validator: (value) {
-                                          if (value!.isEmpty) {
-                                            return 'Please enter the stop time';
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                    ),
-                                    SizedBox(width: 10),
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    SizedBox(
+                      width: screenWidth * 0.5,
+                      child: CustomFields(
+                        isPassword: false,
+                        controller: _timeControllers[index],
+                        keyboardType: TextInputType.name,
+                        text: 'Stop Time',
+                        validator: (value) {
+                          if (value!.isEmpty) {
+                            return 'Please enter the stop time';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    SizedBox(width: 10),
 
-                                    //////------------------------------- Select location container -----------------------------
-                                    GestureDetector(
-                                      onTap: () {
-                                        selectLocation(index);
-                                      },
-                                      child: Container(
-                                          alignment: Alignment.center,
-                                          height: 55,
-                                          width: screenWidth * 0.4,
-                                          decoration: BoxDecoration(
-                                            color: _stopLocationControllers
-                                                    .contains(index)
-                                                ? Colors.red
-                                                : Color(0XFF419A95),
-                                            borderRadius:
-                                                BorderRadius.circular(5),
-                                          ),
-                                          child: const Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceEvenly,
-                                            children: [
-                                              Text("Select location",
-                                                  style: TextStyle(
-                                                      fontSize: 10,
-                                                      color: Colors.white)),
-                                              Icon(Icons.room,
-                                                  color: Colors.white),
-                                            ],
-                                          )),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: screenHeight * 0.025),
-                            ],
-                          ),
+                    //////------------------------------- Select location container -----------------------------
+                    GestureDetector(
+                      onTap: () {
+                       
+
+                        selectLocation(index);
+                      },
+                      child: Container(
+                        alignment: Alignment.center,
+                        height: 55,
+                        width: screenWidth * 0.4,
+                        decoration: BoxDecoration(
+                          color: Color(0XFF419A95),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            
+                            Text("Select location" ,
+                                style: TextStyle(
+                                    fontSize: 10, color: Colors.white)),
+                            Icon(Icons.room, color: Colors.white),
+                          ],
                         ),
                       ),
+                    ),
+                    
+                  ],
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.025),
+            ],
+          ),
+        ),
+      ),
+
                 SizedBox(height: screenHeight * 0.025),
                 CustomButton(
                   onTap: polyLinesbwpickandDest,
@@ -1083,4 +1230,6 @@ class _DriverManageStopsState extends State<DriverManageStops> {
   }
 
   showStopModel(BuildContext context) {}
+
+  
 }
