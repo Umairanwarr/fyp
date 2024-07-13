@@ -89,7 +89,9 @@ class _DriverManageStopsState extends State<DriverManageStops> {
       for (var stop in widget.busRouteModel!.stops) {
         stops.add(stop.stopCords);
         setMarker(stop.stopCords, stop.stopName, stop.time,
-            BitmapDescriptor.defaultMarker);
+            BitmapDescriptor.defaultMarkerWithHue(
+                                      BitmapDescriptor
+                                          .hueBlue),);
       }
 
       totalMarkers.add(destMarker!);
