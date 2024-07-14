@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class BusRouteModel {
+  String id;
   String startLocation;
   String endLocation;
   LatLng startCords;
@@ -10,6 +11,7 @@ class BusRouteModel {
   List<Stop> stops;
 
   BusRouteModel({
+    required this.id,
     required this.startLocation,
     required this.endLocation,
     required this.startCords,
@@ -20,6 +22,7 @@ class BusRouteModel {
 
   BusRouteModel.empty()
       : startLocation = '',
+        id = '',
         endLocation = '',
         startCords = LatLng(0, 0),
         endCords = LatLng(0, 0),
@@ -28,6 +31,7 @@ class BusRouteModel {
 
   factory BusRouteModel.fromJson(Map<String, dynamic> json) {
     return BusRouteModel(
+      id: json['id'],
       startLocation: json['startLocation'],
       endLocation: json['endLocation'],
       startCords: _latLngFromJson(json['startCords']),
@@ -39,17 +43,20 @@ class BusRouteModel {
 
   factory BusRouteModel.fromFirestore(Map<String, dynamic> data, String id) {
     return BusRouteModel(
+      id: data['id'],
       startLocation: data['startLocation'],
       endLocation: data['endLocation'],
       startCords: _latLngFromJson(data['startCords']),
       endCords: _latLngFromJson(data['endCords']),
       totalStops: data['totalStops'],
-      stops: (data['stops'] as List).map((i) => Stop.fromJson(i)).toList(),
-    );
+ stops: (data['stops'] as List<dynamic>? ?? [])
+        .map((stop) => Stop.fromJson(stop))
+        .toList(),    );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'startLocation': startLocation,
       'endLocation': endLocation,
       'startCords': _latLngToJson(startCords),

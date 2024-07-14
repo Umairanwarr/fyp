@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:first_bus_project/driver/home/TimeLineTile.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:first_bus_project/services/routes_services.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -7,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:first_bus_project/driver/menu/driver_menu.dart';
 import 'package:first_bus_project/models/route_model.dart';
 import 'package:first_bus_project/models/user_model.dart';
+import 'package:timeline_tile/timeline_tile.dart';
 
 class DriverMapScreen extends StatefulWidget {
   final UserModel userModel;
@@ -29,15 +31,19 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
   Marker? pickupMarker;
   Marker? destMarker;
   List<LatLng> allCords = [];
+  List<bool> isRemember = [];
   LatLng? pickup, destination;
   Set<Marker> totalMarkers = {};
   Set<Marker> stopMarkers = {};
+  BusRouteModel? bus;
   @override
   void initState() {
     super.initState();
+    bus = widget.busRouteModel;
     allCords.add(widget.busRouteModel!.startCords);
     for (var v in widget.busRouteModel!.stops) {
       allCords.add(v.stopCords);
+      isRemember.add(v.isReached);
     }
 
     allCords.add(widget.busRouteModel!.endCords);
@@ -156,6 +162,7 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
         children: [
           Container(
             padding: EdgeInsets.symmetric(horizontal: 10),
+            margin: EdgeInsets.only(bottom: 10),
             height: MediaQuery.of(context).size.height * 0.5,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
@@ -178,23 +185,92 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
             ),
           ),
           Expanded(
-              child: ListView.builder(
-            padding: EdgeInsets.all(10),
-            itemCount: widget.busRouteModel!.totalStops,
-            itemBuilder: (context, index) {
-              final stop = widget.busRouteModel!.stops[index];
-              return TimeLineTileWidget(
-                isfirst: index == 0,
-                islast: index == widget.busRouteModel!.stops.length - 1,
-                text: '${stop.stopName}\n${stop.time}',
-              );
-            },
-          )),
+  child: ListView.builder(
+    padding: EdgeInsets.all(10),
+    itemCount: widget.busRouteModel!.totalStops,
+    itemBuilder: (context, index) {
+      
+      return TimelineTile(
+        alignment: TimelineAlign.start,
+        isFirst: index == 0,
+        isLast: bus!.stops.length == index + 1,
+        indicatorStyle: IndicatorStyle(
+          width: 20,
+          color: Colors.black,
+          padding: EdgeInsets.symmetric(horizontal: 4),
+          indicator: Container(
+            decoration: BoxDecoration(
+              color: Colors.black,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        endChild: GestureDetector(
+          onTap: () => toggleReached(index),
+          child: Container(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                margin: EdgeInsets.all(4),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: isRemember[index]
+                      ? Colors.green
+                      : Colors.white,
+                  border: Border.all(),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 200,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            overflow: TextOverflow.ellipsis,
+                            bus!.stops[index].stopName,
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold, color: isRemember[index]
+                      ? const Color.fromRGBO(255, 255, 255, 1)
+                      : Colors.black,),
+                          ),
+                          Text(
+                            overflow: TextOverflow.ellipsis,
+                            bus!.stops[index].time,
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: isRemember[index]
+                      ? Colors.white
+                      : Colors.black,),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        beforeLineStyle: LineStyle(
+          color: isRemember[index]
+                      ? Colors.teal
+                      : Colors.teal.shade200,
+          thickness: 6,
+        ),
+      );
+    },
+  ),
+),
         ],
       ),
       floatingActionButton: FloatingActionButton(
+       
         onPressed: _onFabPressed,
-        child: Icon(Icons.location_searching),
+        child: Icon(Icons.refresh)
       ),
     );
   }
@@ -223,4 +299,65 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
 
     return polylines;
   }
+
+
+toggleReached(int index) {
+ 
+    // Show a dialog when the state changes to 'reached'
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            "Are you sure",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+              "you have reached Stop - ${widget.busRouteModel!.stops[index].stopName}"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                setState(() {
+                 update(index);
+
+                  isRemember[index] = !isRemember[index];
+                });
+                Navigator.of(context).pop();
+              },
+              child: Text("OK"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("Cancel"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  update(index)async{
+    LatLng v = bus!.stops[index].stopCords;
+     final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+     final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+     final querySnapshot = await _firestore
+          .collection('busRoutes').doc(_firebaseAuth.currentUser!.uid)
+          .update({
+            'stops.$index' :{
+              'stopCords' : {
+                'latitude' : v.latitude,
+                 'longitude' :v.longitude
+              },
+              'isReached' : false,
+              'stopLocation' : bus!.stops[index].stopLocation,
+              'stopName' : bus!.stops[index].stopName,
+              'time' : bus!.stops[index].time,
+            },
+            
+          });
+          
+  }
 }
+
