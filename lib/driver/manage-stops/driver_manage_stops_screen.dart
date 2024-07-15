@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:first_bus_project/driver/home/driver_map_screen.dart';
 import 'package:first_bus_project/models/route_model.dart';
 import 'package:first_bus_project/models/user_model.dart';
+import 'package:first_bus_project/services/auth_service.dart';
 import 'package:first_bus_project/splash_screen.dart';
 import 'package:first_bus_project/widgets/custom_button.dart';
 import 'package:first_bus_project/widgets/custom_textfield.dart';
@@ -38,6 +39,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
   late TextEditingController _startLocationController;
   late TextEditingController _endLocationController;
   late TextEditingController _totalStopsController;
+  late TextEditingController _startTimeController;
   LatLng? pickup;
   BusRouteModel? bus;
   LatLng? destination;
@@ -66,6 +68,8 @@ class _DriverManageStopsState extends State<DriverManageStops> {
       destination = widget.busRouteModel!.endCords;
       _startLocationController =
           TextEditingController(text: widget.busRouteModel!.startLocation);
+      _startTimeController =
+          TextEditingController(text: widget.busRouteModel!.startTime);
       _endLocationController =
           TextEditingController(text: widget.busRouteModel!.endLocation);
       _totalStopsController = TextEditingController(
@@ -205,6 +209,8 @@ class _DriverManageStopsState extends State<DriverManageStops> {
     if (_formKey.currentState!.validate()) {
       final busRoute = BusRouteModel(
         id: r.nextInt(256).toString(),
+        driverId: FirebaseAuth.instance.currentUser!.uid,
+        startTime: _startTimeController.text,
         startLocation: _startLocationController.text,
         endLocation: _endLocationController.text,
         startCords: LatLng(pickup!.latitude, pickup!.longitude),
@@ -1022,6 +1028,21 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                           color: Colors.grey[600]),
                     ),
                   ],
+                ),
+                SizedBox(height: screenHeight * 0.025),
+                CustomFields(
+                  keyboardType: TextInputType.text,
+                  icon: Icon(Icons.watch,  color: Color(0XFF419A95),),
+                  isPassword: false,
+                  controller: _startTimeController,
+                  
+                  text: 'Start Time',
+                  validator: (value) {
+                    if (value!.isEmpty) {
+                      return 'Please enter the start Time';
+                    }
+                    return null;
+                  },
                 ),
                 SizedBox(height: screenHeight * 0.025),
                 CustomFields(

@@ -66,4 +66,19 @@ class UserModel {
       universityName: universityName ?? this.universityName,
     );
   }
+
+  
+  factory UserModel.fromFirestore(Map<String, dynamic> data, String id) {
+    return UserModel(
+      name: data['name'],
+      email: data['email'],
+      phone: data['phone'],
+      profileImageUrl: data['profileImageUrl'],
+      userType: data['userType'],
+      busNumber: data['busNumber'],
+      busColor: data['busColor'],
+      universityName: data['universityName'],
+ );
+  }
+
 }

@@ -1,8 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class BusRouteModel {
   String id;
+  String startTime;
+  String driverId;
   String startLocation;
   String endLocation;
   LatLng startCords;
@@ -12,6 +13,8 @@ class BusRouteModel {
 
   BusRouteModel({
     required this.id,
+    required this.driverId,
+    required this.startTime,
     required this.startLocation,
     required this.endLocation,
     required this.startCords,
@@ -23,6 +26,8 @@ class BusRouteModel {
   BusRouteModel.empty()
       : startLocation = '',
         id = '',
+        startTime = '',
+        driverId = '',
         endLocation = '',
         startCords = LatLng(0, 0),
         endCords = LatLng(0, 0),
@@ -32,32 +37,37 @@ class BusRouteModel {
   factory BusRouteModel.fromJson(Map<String, dynamic> json) {
     return BusRouteModel(
       id: json['id'],
+      startTime: json['startTime'],
       startLocation: json['startLocation'],
+      driverId: json['driverId'],
       endLocation: json['endLocation'],
       startCords: _latLngFromJson(json['startCords']),
       endCords: _latLngFromJson(json['endCords']),
       totalStops: json['totalStops'],
-      stops: (json['stops'] as List).map((i) => Stop.fromJson(i)).toList(),
+      stops: (json['stops'] as List<dynamic>).map((i) => Stop.fromJson(i)).toList(),
     );
   }
 
   factory BusRouteModel.fromFirestore(Map<String, dynamic> data, String id) {
     return BusRouteModel(
-      id: data['id'],
+      id: id, // use id parameter, not data['id']
+      startTime: data['startTime'],
       startLocation: data['startLocation'],
+      driverId: data['driverId'],
       endLocation: data['endLocation'],
       startCords: _latLngFromJson(data['startCords']),
       endCords: _latLngFromJson(data['endCords']),
       totalStops: data['totalStops'],
- stops: (data['stops'] as List<dynamic>? ?? [])
-        .map((stop) => Stop.fromJson(stop))
-        .toList(),    );
+      stops: (data['stops'] as List<dynamic>).map((stop) => Stop.fromJson(stop)).toList(),
+    );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'startLocation': startLocation,
+      'startTime': startTime,
+      'driverId': driverId,
       'endLocation': endLocation,
       'startCords': _latLngToJson(startCords),
       'endCords': _latLngToJson(endCords),
@@ -74,6 +84,7 @@ class BusRouteModel {
     return {'latitude': latLng.latitude, 'longitude': latLng.longitude};
   }
 }
+
 
 class Stop {
   String stopName;

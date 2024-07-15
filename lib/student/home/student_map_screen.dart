@@ -7,6 +7,7 @@ import 'package:first_bus_project/models/route_model.dart';
 import 'package:first_bus_project/models/user_model.dart';
 import 'package:first_bus_project/services/routes_services.dart';
 import 'package:first_bus_project/student/menu/student_menu.dart';
+import 'package:first_bus_project/student/student_route.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -92,7 +93,7 @@ String docId = bus.id;
   void _onFabPressed() async {
     await _getCurrentLocation();
     mapController?.animateCamera(
-      CameraUpdate.newLatLngZoom(currentLocation!, 15),
+      CameraUpdate.newLatLngZoom(currentLocation!, 13),
     );
   }
 
@@ -199,8 +200,10 @@ String docId = bus.id;
     if (snapshot.connectionState == ConnectionState.waiting) {
       return Center(child: CircularProgressIndicator());
     }
+    List<String> docs = [];
 
     List<BusRouteModel> busRoutes = snapshot.data!.docs.map((doc) {
+      docs.add(doc.id);
       return BusRouteModel.fromFirestore(doc.data(), doc.id);
     }).toList();
 
@@ -232,10 +235,15 @@ String docId = bus.id;
                 ),
                 if (route.stops.isNotEmpty && index < route.stops.length)
                   Text(
-                    "Time : ${route.stops[index].time}",
+                    "Time : ${route.startTime}",
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey[600]),
                   ),
+
+                  ElevatedButton(onPressed: () {
+                    print("--------------------${route.driverId}");
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => StudentRoute(uid: route.driverId),));
+                  }, child: Text("Check stops"))
                
               ],
             ),
@@ -252,10 +260,11 @@ String docId = bus.id;
         ],
       ),
       floatingActionButton: FloatingActionButton(
-       
-        onPressed: _onFabPressed,
-        child: Icon(Icons.refresh)
-      ),
+        child: Icon(Icons.room),
+        onPressed: () {
+        _onFabPressed();
+      }),
+   
     );
   }
 

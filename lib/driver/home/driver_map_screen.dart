@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:first_bus_project/services/routes_services.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -88,7 +89,7 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
   void _onFabPressed() async {
     await _getCurrentLocation();
     mapController?.animateCamera(
-      CameraUpdate.newLatLngZoom(currentLocation!, 15),
+      CameraUpdate.newLatLngZoom(currentLocation!, 13),
     );
   }
 
@@ -138,6 +139,7 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text('Driver Map'),
@@ -149,7 +151,7 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
                 MaterialPageRoute(
                   builder: (_) => DriverMenuScreen(
                     userModel: widget.userModel,
-                    busRouteModel: widget.busRouteModel,
+                    busRouteModel: bus,
                   ),
                 ),
               );
@@ -184,12 +186,11 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
               ),
             ),
           ),
-          Expanded(
+          (bus?.driverId != null && bus!.driverId.isNotEmpty) ? Expanded(
   child: ListView.builder(
     padding: EdgeInsets.all(10),
     itemCount: widget.busRouteModel!.totalStops,
     itemBuilder: (context, index) {
-      
       return TimelineTile(
         alignment: TimelineAlign.start,
         isFirst: index == 0,
@@ -229,22 +230,26 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            overflow: TextOverflow.ellipsis,
                             bus!.stops[index].stopName,
                             style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold, color: isRemember[index]
-                      ? const Color.fromRGBO(255, 255, 255, 1)
-                      : Colors.black,),
+                              fontSize: 20, 
+                              fontWeight: FontWeight.bold, 
+                              color: isRemember[index]
+                                ? const Color.fromRGBO(255, 255, 255, 1)
+                                : Colors.black,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            overflow: TextOverflow.ellipsis,
                             bus!.stops[index].time,
                             style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: isRemember[index]
-                      ? Colors.white
-                      : Colors.black,),
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: isRemember[index]
+                                ? Colors.white
+                                : Colors.black,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -257,20 +262,80 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
         ),
         beforeLineStyle: LineStyle(
           color: isRemember[index]
-                      ? Colors.teal
-                      : Colors.teal.shade200,
+            ? Colors.teal
+            : Colors.teal.shade200,
           thickness: 6,
         ),
       );
     },
   ),
+) : Container(),
+
+GestureDetector(
+  onTap: () {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            "Are you sure",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            
+              "You want to delete this route? - "),
+          actions: [
+            TextButton(
+              onPressed: ()async {
+                try{
+await FirebaseFirestore.instance
+        .collection('busRoutes') // Change to your collection name
+        .doc(bus!.driverId)
+        .delete();
+        setState(() {
+         bus = BusRouteModel.empty();
+         totalMarkers.clear();
+         allCords.clear();
+         
+        });
+                } catch(e){
+                  print("error ------- $e");
+                }
+               
+                Navigator.of(context).pop();
+              },
+              child: Text("OK"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text("Cancel"),
+            ),
+          ],
+        );
+      },
+    );
+  },
+  child: Container(
+                                width: double.infinity,
+                                height: 50,
+                                alignment: Alignment.center,
+                                margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                decoration: BoxDecoration(
+                    color: Colors.black, borderRadius: BorderRadius.circular(5)),
+                                child: Text(
+                                  "Delete Routes",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
 ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
        
         onPressed: _onFabPressed,
-        child: Icon(Icons.refresh)
+        child: Icon(Icons.room)
       ),
     );
   }
