@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:first_bus_project/models/route_model.dart';
 import 'package:first_bus_project/models/user_model.dart';
 import 'package:first_bus_project/services/routes_services.dart';
+import 'package:first_bus_project/student/home/student_nearest_stop.dart';
 import 'package:first_bus_project/student/menu/student_menu.dart';
 import 'package:first_bus_project/student/student_route.dart';
 import 'package:flutter/material.dart';
@@ -242,7 +243,7 @@ String docId = bus.id;
 
                   ElevatedButton(onPressed: () {
                     print("--------------------${route.driverId}");
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => StudentRoute(uid: route.driverId),));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => StudentNearest(uid: route.driverId),));
                   }, child: Text("Check stops"))
                
               ],

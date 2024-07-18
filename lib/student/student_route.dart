@@ -301,6 +301,7 @@ class _StudentRouteState extends State<StudentRoute> {
                                   Text(
                                     bus!.stops[index].stopName,
                                     style: TextStyle(
+                                      color: Colors.white,
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                     ),
