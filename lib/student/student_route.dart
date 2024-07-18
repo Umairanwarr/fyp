@@ -40,12 +40,16 @@ class _StudentRouteState extends State<StudentRoute> {
 
   Future<void> getData() async {
     try {
-      DocumentSnapshot busDoc = await _firestore.collection('busRoutes').doc(widget.uid).get();
-      DocumentSnapshot driverDoc = await _firestore.collection('users').doc(widget.uid).get();
+      DocumentSnapshot busDoc =
+          await _firestore.collection('busRoutes').doc(widget.uid).get();
+      DocumentSnapshot driverDoc =
+          await _firestore.collection('users').doc(widget.uid).get();
 
       setState(() {
-        bus = BusRouteModel.fromFirestore(busDoc.data() as Map<String, dynamic>, busDoc.id);
-        driver = UserModel.fromFirestore(driverDoc.data() as Map<String, dynamic>, driverDoc.id);
+        bus = BusRouteModel.fromFirestore(
+            busDoc.data() as Map<String, dynamic>, busDoc.id);
+        driver = UserModel.fromFirestore(
+            driverDoc.data() as Map<String, dynamic>, driverDoc.id);
         updateData();
         isLoading = false;
       });
@@ -174,10 +178,14 @@ class _StudentRouteState extends State<StudentRoute> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: GoogleMap(
-                      onMapCreated: (GoogleMapController controller) {
+                      onMapCreated: (GoogleMapController controller) async {
                         setState(() {
                           mapController = controller;
                         });
+                        await _getCurrentLocation();
+                        mapController?.animateCamera(
+                          CameraUpdate.newLatLngZoom(currentLocation!, 11),
+                        );
                       },
                       polylines: _createPolylines(),
                       markers: totalMarkers,
@@ -200,7 +208,9 @@ class _StudentRouteState extends State<StudentRoute> {
                               children: [
                                 CircleAvatar(
                                   radius: 40,
-                                  backgroundImage: NetworkImage(driver!.profileImageUrl ?? 'https://via.placeholder.com/150'),
+                                  backgroundImage: NetworkImage(
+                                      driver!.profileImageUrl ??
+                                          'https://via.placeholder.com/150'),
                                 ),
                                 SizedBox(height: 10),
                                 Text(
@@ -308,7 +318,8 @@ class _StudentRouteState extends State<StudentRoute> {
                                   ),
                                   SizedBox(height: 5),
                                   Text(
-                                    bus!.stops[index].time ?? 'No time provided',
+                                    bus!.stops[index].time ??
+                                        'No time provided',
                                     style: TextStyle(fontSize: 14),
                                   ),
                                 ],
@@ -352,7 +363,3 @@ class _StudentRouteState extends State<StudentRoute> {
     return polylines;
   }
 }
-
-
-
-

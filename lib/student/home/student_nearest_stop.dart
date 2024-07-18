@@ -62,14 +62,6 @@ class _StudentNearestState extends State<StudentNearest> {
 
       print("--------------------------------$distance");
 
-////-------- if you want to add conditions that only stops with in 5km near student
-      // if(distance>=5){
-      //   if (distance < shortestDistance) {
-      //   shortestDistance = distance;
-      //   nMarker = marker;
-      // }
-      // }
-
       if (distance < shortestDistance) {
         shortestDistance = distance;
         nMarker = marker;
@@ -158,7 +150,7 @@ class _StudentNearestState extends State<StudentNearest> {
   void _onFabPressed() async {
     await _getCurrentLocation();
     mapController?.animateCamera(
-      CameraUpdate.newLatLngZoom(currentLocation!, 15),
+      CameraUpdate.newLatLngZoom(currentLocation!, 11),
     );
   }
 
@@ -166,16 +158,13 @@ class _StudentNearestState extends State<StudentNearest> {
       LatLng point, String name, String? time, BitmapDescriptor icon) {
     final MarkerId markerId = MarkerId(name);
 
-    // Convert stopMarkers Set to a List to find existing markers
     List<Marker> markersList = stopMarkers.toList();
 
-    // Check if the marker with the given name already exists
     int existingIndex =
         markersList.indexWhere((marker) => marker.markerId.value == name);
 
     setState(() {
       if (existingIndex != -1) {
-        // Update existing marker if found
         markersList[existingIndex] = Marker(
           markerId: MarkerId(name),
           position: point,
@@ -186,10 +175,8 @@ class _StudentNearestState extends State<StudentNearest> {
           icon: icon,
         );
 
-        // Convert back to Set after modification
         stopMarkers = markersList.toSet();
       } else {
-        // Add new marker if not found
         stopMarkers.add(
           Marker(
             markerId: MarkerId(name),
@@ -236,150 +223,24 @@ class _StudentNearestState extends State<StudentNearest> {
                       markers: {
                         pickupMarker!,
                         destMarker!,
-                        nearestStop!,
+                        if (nearestStop != null) nearestStop!,
                       },
                       initialCameraPosition: CameraPosition(
-                        target: LatLng(nearestStop!.position.latitude,
-                            nearestStop!.position.longitude),
-                        zoom: 14,
+                        target: LatLng(
+                          nearestStop?.position.latitude ?? 0,
+                          nearestStop?.position.longitude ?? 0,
+                        ),
+                        zoom: 11,
                       ),
                     ),
                   ),
                 ),
-                // GestureDetector(
-                //   onTap: () {
-                //     showDialog(
-                //       context: context,
-                //       builder: (BuildContext context) {
-                //         return AlertDialog(
-                //           title: Text('Driver Details'),
-                //           content: SingleChildScrollView(
-                //             child: Column(
-                //               children: [
-                //                 CircleAvatar(
-                //                   radius: 40,
-                //                   backgroundImage: NetworkImage(driver!.profileImageUrl ?? 'https://via.placeholder.com/150'),
-                //                 ),
-                //                 SizedBox(height: 10),
-                //                 Text(
-                //                   driver?.name ?? 'Loading...',
-                //                   style: TextStyle(
-                //                     fontSize: 20,
-                //                     fontWeight: FontWeight.bold,
-                //                   ),
-                //                 ),
-                //                 SizedBox(height: 10),
-                //                 Text(
-                //                   'Email: ${driver?.email ?? 'Loading...'}',
-                //                   style: TextStyle(
-                //                     fontSize: 16,
-                //                   ),
-                //                 ),
-                //                 SizedBox(height: 10),
-                //                 Text(
-                //                   'Phone: ${driver?.phone ?? 'Loading...'}',
-                //                   style: TextStyle(
-                //                     fontSize: 16,
-                //                   ),
-                //                 ),
-                //                 SizedBox(height: 10),
-                //                 Text(
-                //                   'Bus Number: ${driver?.busNumber ?? 'Loading...'}',
-                //                   style: TextStyle(
-                //                     fontSize: 16,
-                //                   ),
-                //                 ),
-                //               ],
-                //             ),
-                //           ),
-                //           actions: [
-                //             TextButton(
-                //               onPressed: () {
-                //                 Navigator.of(context).pop();
-                //               },
-                //               child: Text('Close'),
-                //             ),
-                //           ],
-                //         );
-                //       },
-                //     );
-                //   },
-                //   child: Container(
-                //     width: double.infinity,
-                //     height: 50,
-                //     alignment: Alignment.center,
-                //     margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                //     decoration: BoxDecoration(
-                //       color: Colors.black,
-                //       borderRadius: BorderRadius.circular(5),
-                //     ),
-                //     child: Text(
-                //       "Check driver details",
-                //       style: TextStyle(color: Colors.white),
-                //     ),
-                //   ),
-                // ),
-                // Expanded(
-                //   child: ListView.builder(
-                //     padding: EdgeInsets.all(10),
-                //     itemCount: bus?.totalStops ?? 0,
-                //     itemBuilder: (context, index) {
-                //       return TimelineTile(
-                //         alignment: TimelineAlign.start,
-                //         isFirst: index == 0,
-                //         isLast: bus!.stops.length == index + 1,
-                //         indicatorStyle: IndicatorStyle(
-                //           width: 20,
-                //           color: Colors.black,
-                //           padding: EdgeInsets.symmetric(horizontal: 4),
-                //           indicator: Container(
-                //             decoration: BoxDecoration(
-                //               color: Colors.black,
-                //               shape: BoxShape.circle,
-                //             ),
-                //           ),
-                //         ),
-                //         endChild: Container(
-                //           child: Align(
-                //             alignment: Alignment.centerLeft,
-                //             child: Container(
-                //               padding: EdgeInsets.symmetric(
-                //                   horizontal: 20, vertical: 10),
-                //               margin: EdgeInsets.all(4),
-                //               width: double.infinity,
-                //               decoration: BoxDecoration(
-                //                 color: isRemember[index]
-                //                     ? Colors.green
-                //                     : Colors.red,
-                //                 borderRadius: BorderRadius.circular(10),
-                //               ),
-                //               child: Column(
-                //                 crossAxisAlignment: CrossAxisAlignment.start,
-                //                 children: [
-                //                   Text(
-                //                     bus!.stops[index].stopName,
-                //                     style: TextStyle(
-                //                       fontSize: 16,
-                //                       fontWeight: FontWeight.bold,
-                //                     ),
-                //                   ),
-                //                   SizedBox(height: 5),
-                //                   Text(
-                //                     bus!.stops[index].time ?? 'No time provided',
-                //                     style: TextStyle(fontSize: 14),
-                //                   ),
-                //                 ],
-                //               ),
-                //             ),
-                //           ),
-                //         ),
-                //       );
-                //     },
-                //   ),
-                // )
                 SizedBox(height: 10),
                 Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     width: MediaQuery.of(context).size.width * 0.90,
                     decoration: BoxDecoration(
                         color: Colors.white,
@@ -387,36 +248,36 @@ class _StudentNearestState extends State<StudentNearest> {
                             topLeft: Radius.circular(15),
                             topRight: Radius.circular(15))),
                     height: MediaQuery.of(context).size.height * 0.35,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: SizedBox(
-                              width: 70,
-                              child: Divider(
-                                  thickness: 5, color: Colors.grey[400])),
-                        ),
-                        Text("Nearest Stop",
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 20.0),
-                          child: (nearestStop != null)
-                              ? Text(
-                                  "Stop name: ${nearestStop!.infoWindow.title}",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                  ))
-                              : Text("Stop name: ${"Getting . . ."}",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                  )),
-                        ),
-                        Padding(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: SizedBox(
+                                width: 70,
+                                child: Divider(
+                                    thickness: 5, color: Colors.grey[400])),
+                          ),
+                          Text("Nearest Stop",
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                          Padding(
                             padding: const EdgeInsets.only(left: 20.0),
                             child: (nearestStop != null)
                                 ? Text(
-                                    "${"Ariving at ${bus!.startTime}"}",
+                                    "Stop name: ${nearestStop!.infoWindow.title}",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                    ))
+                                : Text("Stop name: ${"Getting . . ."}",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                    )),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 20.0),
+                            child: (nearestStop != null)
+                                ? Text("${"Ariving at ${bus!.startTime}"}",
                                     style: TextStyle(
                                       fontSize: 18,
                                     ))
@@ -425,127 +286,133 @@ class _StudentNearestState extends State<StudentNearest> {
                                       fontSize: 18,
                                     )),
                           ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 20.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                  overflow: TextOverflow.ellipsis,
-                                  'Bus Number: ${driver?.busNumber ?? 'Loading...'}',
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold)),
-                              Text(
-                                  overflow: TextOverflow.ellipsis,
-                                  'Color: ${driver?.busColor ?? 'Loading...'}',
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold)),
-                            ],
+                          Padding(
+                            padding: const EdgeInsets.only(left: 20.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                    overflow: TextOverflow.ellipsis,
+                                    'Bus Number: ${driver?.busNumber ?? 'Loading...'}',
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold)),
+                                Text(
+                                    overflow: TextOverflow.ellipsis,
+                                    'Color: ${driver?.busColor ?? 'Loading...'}',
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold)),
+                              ],
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 5),
-                        GestureDetector(
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: Text('Driver Details'),
-                                  content: SingleChildScrollView(
-                                    child: Column(
-                                      children: [
-                                        CircleAvatar(
-                                          radius: 40,
-                                          backgroundImage: NetworkImage(driver!
-                                                  .profileImageUrl ??
-                                              'https://via.placeholder.com/150'),
-                                        ),
-                                        SizedBox(height: 10),
-                                        Text(
-                                          driver?.name ?? 'Loading...',
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
+                          SizedBox(height: 5),
+                          GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('Driver Details'),
+                                    content: SingleChildScrollView(
+                                      child: Column(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 40,
+                                            backgroundImage: NetworkImage(driver!
+                                                    .profileImageUrl ??
+                                                'https://via.placeholder.com/150'),
                                           ),
-                                        ),
-                                        SizedBox(height: 10),
-                                        Text(
-                                          'Email: ${driver?.email ?? 'Loading...'}',
-                                          style: TextStyle(
-                                            fontSize: 16,
+                                          SizedBox(height: 10),
+                                          Text(
+                                            driver?.name ?? 'Loading...',
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                        ),
-                                        SizedBox(height: 10),
-                                        Text(
-                                          'Phone: ${driver?.phone ?? 'Loading...'}',
-                                          style: TextStyle(
-                                            fontSize: 16,
+                                          SizedBox(height: 10),
+                                          Text(
+                                            'Email: ${driver?.email ?? 'Loading...'}',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                            ),
                                           ),
-                                        ),
-                                        SizedBox(height: 10),
-                                        Text(
-                                          'Bus Number: ${driver?.busNumber ?? 'Loading...'}',
-                                          style: TextStyle(
-                                            fontSize: 16,
+                                          SizedBox(height: 10),
+                                          Text(
+                                            'Phone: ${driver?.phone ?? 'Loading...'}',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                          SizedBox(height: 10),
+                                          Text(
+                                            'Bus Number: ${driver?.busNumber ?? 'Loading...'}',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: Text('Close'),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                          child: Container(
-                            width: double.infinity,
-                            height: 50,
-                            alignment: Alignment.center,
-                            margin: EdgeInsets.symmetric(
-                              horizontal: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Color(0xFF419A95),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Text(
-                              "Check driver details",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 5),
-                        GestureDetector(
-                          onTap: (){
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => StudentRoute(uid :widget.uid),));
-                          },
-                          child: Container(
-                            width: double.infinity,
-                            height: 50,
-                            alignment: Alignment.center,
-                            margin: EdgeInsets.symmetric(
-                              horizontal: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Color(0xFF419A95),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Text(
-                              "View all stops",
-                              style: TextStyle(color: Colors.white),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text('Close'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              height: 50,
+                              alignment: Alignment.center,
+                              margin: EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF419A95),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Text(
+                                "Check driver details",
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                          SizedBox(height: 5),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        StudentRoute(uid: widget.uid),
+                                  ));
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              height: 50,
+                              alignment: Alignment.center,
+                              margin: EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Color(0xFF419A95),
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Text(
+                                "View all stops",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     )),
               ],
             ),

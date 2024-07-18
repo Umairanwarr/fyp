@@ -310,7 +310,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                               child: GoogleMap(
                                 initialCameraPosition: CameraPosition(
                                   target: currentLocation ??
-                                      LatLng(37.7749, -122.4194),
+                                      LatLng(33.7445, 72.7867),
                                   zoom: 11,
                                 ),
                                 onTap: (LatLng position) {
@@ -340,10 +340,18 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                                       draggable: true,
                                     ),
                                 },
-                                onMapCreated: (GoogleMapController controller) {
-                                  setState(() {
-                                    mapController = controller;
-                                  });
+                                onMapCreated:
+                                    (GoogleMapController controller) async {
+                                  setState(
+                                    () {
+                                      mapController = controller;
+                                    },
+                                  );
+                                  await _getCurrentLocation();
+                                  mapController?.animateCamera(
+                                    CameraUpdate.newLatLngZoom(
+                                        currentLocation!, 11),
+                                  );
                                 },
                                 gestureRecognizers: Set()
                                   ..add(Factory<PanGestureRecognizer>(
@@ -465,7 +473,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                           borderRadius: BorderRadius.circular(10),
                           child: GoogleMap(
                             initialCameraPosition: CameraPosition(
-                              target: LatLng(37.7749, -122.4194),
+                              target: LatLng(33.7445, 72.7867),
                               zoom: 11,
                             ),
                             onTap: (LatLng position) {
@@ -493,10 +501,16 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                                   draggable: true,
                                 ),
                             },
-                            onMapCreated: (GoogleMapController controller) {
+                            onMapCreated:
+                                (GoogleMapController controller) async {
                               setState(() {
                                 mapController = controller;
                               });
+                              await _getCurrentLocation();
+                              mapController?.animateCamera(
+                                CameraUpdate.newLatLngZoom(
+                                    currentLocation!, 11),
+                              );
                             },
                             gestureRecognizers: Set()
                               ..add(Factory<PanGestureRecognizer>(
@@ -617,7 +631,7 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                           borderRadius: BorderRadius.circular(10),
                           child: GoogleMap(
                             initialCameraPosition: CameraPosition(
-                              target: LatLng(37.7749, -122.4194),
+                              target: LatLng(33.7445, 72.7867),
                               zoom: 11,
                             ),
                             onTap: (LatLng position) {
@@ -648,10 +662,16 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                               });
                             },
                             markers: temp,
-                            onMapCreated: (GoogleMapController controller) {
+                            onMapCreated:
+                                (GoogleMapController controller) async {
                               setState(() {
                                 mapController = controller;
                               });
+                              await _getCurrentLocation();
+                              mapController?.animateCamera(
+                                CameraUpdate.newLatLngZoom(
+                                    currentLocation!, 11),
+                              );
                             },
                             gestureRecognizers: Set()
                               ..add(
@@ -778,13 +798,19 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                           borderRadius: BorderRadius.circular(10),
                           child: GoogleMap(
                             initialCameraPosition: CameraPosition(
-                              target: LatLng(37.7749, -122.4194),
+                              target: LatLng(33.7445, 72.7867),
                               zoom: 11,
                             ),
                             markers: totalMarkers,
                             polylines: _createPolylines(),
-                            onMapCreated: (GoogleMapController controller) {
+                            onMapCreated:
+                                (GoogleMapController controller) async {
                               mapController = controller;
+                              await _getCurrentLocation();
+                              mapController?.animateCamera(
+                                CameraUpdate.newLatLngZoom(
+                                    currentLocation!, 11),
+                              );
                             },
                           ),
                         ),
@@ -1032,10 +1058,12 @@ class _DriverManageStopsState extends State<DriverManageStops> {
                 SizedBox(height: screenHeight * 0.025),
                 CustomFields(
                   keyboardType: TextInputType.text,
-                  icon: Icon(Icons.watch,  color: Color(0XFF419A95),),
+                  icon: Icon(
+                    Icons.watch,
+                    color: Color(0XFF419A95),
+                  ),
                   isPassword: false,
                   controller: _startTimeController,
-                  
                   text: 'Start Time',
                   validator: (value) {
                     if (value!.isEmpty) {
