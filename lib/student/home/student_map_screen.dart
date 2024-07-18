@@ -13,6 +13,7 @@ import 'package:first_bus_project/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 class StudentMapScreen extends StatefulWidget {
   UserModel userModel;
@@ -159,134 +160,148 @@ class _StudentMapScreenState extends State<StudentMapScreen> {
           )
         ],
       ),
-      body: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            margin: EdgeInsets.only(bottom: 10),
-            height: MediaQuery.of(context).size.height * 0.5,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
+      body: SlidingUpPanel(
+        maxHeight: MediaQuery.of(context).size.height * 0.38,
+        minHeight: MediaQuery.of(context).size.height * 0.38,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        panel: Column(
+          children: [
+            SizedBox(
+              width: 70,
+              child: Divider(
+                thickness: 5,
+                color: Colors.grey[400],
+              ),
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: GoogleMap(
-                onMapCreated: (GoogleMapController controller) async {
-                  setState(() {
-                    mapController = controller;
-                  });
-                  await _getCurrentLocation();
-                  mapController?.animateCamera(
-                    CameraUpdate.newLatLngZoom(currentLocation!, 11),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: _firestore.collection('busRoutes').snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  List<String> docs = [];
+
+                  List<BusRouteModel> busRoutes =
+                      snapshot.data!.docs.map((doc) {
+                    docs.add(doc.id);
+                    return BusRouteModel.fromFirestore(doc.data(), doc.id);
+                  }).toList();
+
+                  return ListView.builder(
+                    itemCount: busRoutes.length,
+                    itemBuilder: (context, index) {
+                      BusRouteModel route = busRoutes[index];
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            selectedRouteId = route.id;
+                          });
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
+                          margin:
+                              EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: selectedRouteId == route.id
+                                ? const Color.fromRGBO(76, 175, 80, 1)
+                                    .withOpacity(0.4)
+                                : Colors.blue.withOpacity(0.0),
+                            border: Border.all(
+                                color: Colors.green.withOpacity(0.4)),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                route.startLocation,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black),
+                              ),
+                              if (route.stops.isNotEmpty &&
+                                  index < route.stops.length)
+                                Text(
+                                  "Time : ${route.startTime}",
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey[600]),
+                                ),
+                              InkWell(
+                                onTap: () {
+                                  print(
+                                      "--------------------${route.driverId}");
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            StudentNearest(uid: route.driverId),
+                                      ));
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 50,
+                                  alignment: Alignment.center,
+                                  margin: EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 10),
+                                  decoration: BoxDecoration(
+                                      color: Color(0Xff419A95),
+                                      borderRadius: BorderRadius.circular(5)),
+                                  child: Text(
+                                    "Check Stop",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
-                polylines: _createPolylines(),
-                markers: totalMarkers,
-                initialCameraPosition: CameraPosition(
-                  target: currentLocation ?? LatLng(33.7445, 72.7867),
-                  zoom: 12,
-                ),
+              ),
+            ),
+          ],
+        ),
+        body: Container(
+          // padding: EdgeInsets.symmetric(horizontal: 10),
+          margin: EdgeInsets.only(bottom: 10),
+          height: MediaQuery.of(context).size.height * 0.5,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: GoogleMap(
+              onMapCreated: (GoogleMapController controller) async {
+                setState(() {
+                  mapController = controller;
+                });
+                await _getCurrentLocation();
+                mapController?.animateCamera(
+                  CameraUpdate.newLatLngZoom(currentLocation!, 11),
+                );
+              },
+              polylines: _createPolylines(),
+              markers: totalMarkers,
+              initialCameraPosition: CameraPosition(
+                target: currentLocation ?? LatLng(33.7445, 72.7867),
+                zoom: 12,
               ),
             ),
           ),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _firestore.collection('busRoutes').snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                }
-                List<String> docs = [];
-
-                List<BusRouteModel> busRoutes = snapshot.data!.docs.map((doc) {
-                  docs.add(doc.id);
-                  return BusRouteModel.fromFirestore(doc.data(), doc.id);
-                }).toList();
-
-                return ListView.builder(
-                  itemCount: busRoutes.length,
-                  itemBuilder: (context, index) {
-                    BusRouteModel route = busRoutes[index];
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedRouteId = route.id;
-                        });
-                      },
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        margin:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: selectedRouteId == route.id
-                              ? const Color.fromRGBO(76, 175, 80, 1)
-                                  .withOpacity(0.4)
-                              : Colors.blue.withOpacity(0.0),
-                          border:
-                              Border.all(color: Colors.green.withOpacity(0.4)),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              route.startLocation,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black),
-                            ),
-                            if (route.stops.isNotEmpty &&
-                                index < route.stops.length)
-                              Text(
-                                "Time : ${route.startTime}",
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey[600]),
-                              ),
-                            InkWell(
-                              onTap: () {
-                                print("--------------------${route.driverId}");
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          StudentNearest(uid: route.driverId),
-                                    ));
-                              },
-                              child: Container(
-                                width: double.infinity,
-                                height: 50,
-                                alignment: Alignment.center,
-                                margin: EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 10),
-                                decoration: BoxDecoration(
-                                    color: Colors.black,
-                                    borderRadius: BorderRadius.circular(5)),
-                                child: Text(
-                                  "Check Stop",
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
           child: Icon(Icons.room),

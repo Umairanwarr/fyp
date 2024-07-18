@@ -7,6 +7,7 @@ import 'package:first_bus_project/student/student_route.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:timeline_tile/timeline_tile.dart';
 
 class StudentNearest extends StatefulWidget {
@@ -38,13 +39,10 @@ class _StudentNearestState extends State<StudentNearest> {
     _onFabPressed();
     getData();
     _getCurrentLocation();
-    findNearestMarker(stopMarkers);
-    delay();
-
     super.initState();
   }
 
-  findNearestMarker(Set<Marker> markers) async {
+  Future<void> findNearestMarker(Set<Marker> markers) async {
     Position userLocation = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
     double userLatitude = userLocation.latitude;
@@ -73,10 +71,6 @@ class _StudentNearestState extends State<StudentNearest> {
     });
   }
 
-  delay() async {
-    await Future.delayed(Duration(seconds: 2));
-  }
-
   Future<void> getData() async {
     try {
       DocumentSnapshot busDoc =
@@ -91,6 +85,7 @@ class _StudentNearestState extends State<StudentNearest> {
             driverDoc.data() as Map<String, dynamic>, driverDoc.id);
         updateData();
         isLoading = false;
+        findNearestMarker(stopMarkers);
       });
     } catch (e) {
       print("Error fetching data: $e");
@@ -149,9 +144,11 @@ class _StudentNearestState extends State<StudentNearest> {
 
   void _onFabPressed() async {
     await _getCurrentLocation();
-    mapController?.animateCamera(
-      CameraUpdate.newLatLngZoom(currentLocation!, 11),
-    );
+    if (mapController != null && currentLocation != null) {
+      mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(currentLocation!, 11),
+      );
+    }
   }
 
   void setMarker(
@@ -197,229 +194,225 @@ class _StudentNearestState extends State<StudentNearest> {
     return Scaffold(
       backgroundColor: Colors.white70.withOpacity(0.9),
       appBar: AppBar(
-        automaticallyImplyLeading: false,
+        // automaticallyImplyLeading: false,
+        title: Text('Check Stop'),
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  margin: EdgeInsets.only(bottom: 10),
-                  height: MediaQuery.of(context).size.height * 0.50,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: GoogleMap(
-                      onMapCreated: (GoogleMapController controller) {
-                        setState(() {
-                          mapController = controller;
-                        });
-                      },
-                      polylines: _createPolylines(),
-                      markers: {
-                        pickupMarker!,
-                        destMarker!,
-                        if (nearestStop != null) nearestStop!,
-                      },
-                      initialCameraPosition: CameraPosition(
-                        target: LatLng(
-                          nearestStop?.position.latitude ?? 0,
-                          nearestStop?.position.longitude ?? 0,
+      body: SlidingUpPanel(
+        maxHeight: MediaQuery.of(context).size.height * 0.38,
+        minHeight: MediaQuery.of(context).size.height * 0.38,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        panel: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                      ),
+                      width: MediaQuery.of(context).size.width * 0.90,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(15),
+                              topRight: Radius.circular(15))),
+                      height: double.infinity,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Center(
+                              child: SizedBox(
+                                  width: 70,
+                                  child: Divider(
+                                      thickness: 5, color: Colors.grey[400])),
+                            ),
+                            Text("Nearest Stop",
+                                style: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold)),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 20.0),
+                              child: (nearestStop != null)
+                                  ? Text(
+                                      "Stop name: ${nearestStop!.infoWindow.title}",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                      ))
+                                  : Text("Stop name: ${"Getting . . ."}",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                      )),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 20.0),
+                              child: (nearestStop != null)
+                                  ? Text("${"Arriving at ${bus!.startTime}"}",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                      ))
+                                  : Text("Getting . . .",
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                      )),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 20.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                      overflow: TextOverflow.ellipsis,
+                                      'Bus Number: ${driver?.busNumber ?? 'Loading...'}',
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold)),
+                                  Text(
+                                      overflow: TextOverflow.ellipsis,
+                                      'Color: ${driver?.busColor ?? 'Loading...'}',
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 5),
+                            GestureDetector(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: Text('Driver Details'),
+                                      content: SingleChildScrollView(
+                                        child: Column(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 40,
+                                              backgroundImage: NetworkImage(driver!
+                                                      .profileImageUrl ??
+                                                  'https://via.placeholder.com/150'),
+                                            ),
+                                            SizedBox(height: 10),
+                                            Text(
+                                              driver?.name ?? 'Loading...',
+                                              style: TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            SizedBox(height: 10),
+                                            Text(
+                                              'Email: ${driver?.email ?? 'Loading...'}',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            SizedBox(height: 10),
+                                            Text(
+                                              'Phone: ${driver?.phone ?? 'Loading...'}',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            SizedBox(height: 10),
+                                            Text(
+                                              'Bus Number: ${driver?.busNumber ?? 'Loading...'}',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: Text('Close'),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                              child: Container(
+                                width: double.infinity,
+                                height: 50,
+                                alignment: Alignment.center,
+                                margin: EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF419A95),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: Text(
+                                  "Check driver details",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 5),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          StudentRoute(uid: widget.uid),
+                                    ));
+                              },
+                              child: Container(
+                                width: double.infinity,
+                                height: 50,
+                                alignment: Alignment.center,
+                                margin: EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF419A95),
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                child: Text(
+                                  "View all stops",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        zoom: 11,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 10),
-                Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    width: MediaQuery.of(context).size.width * 0.90,
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(15),
-                            topRight: Radius.circular(15))),
-                    height: MediaQuery.of(context).size.height * 0.35,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Center(
-                            child: SizedBox(
-                                width: 70,
-                                child: Divider(
-                                    thickness: 5, color: Colors.grey[400])),
-                          ),
-                          Text("Nearest Stop",
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 20.0),
-                            child: (nearestStop != null)
-                                ? Text(
-                                    "Stop name: ${nearestStop!.infoWindow.title}",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                    ))
-                                : Text("Stop name: ${"Getting . . ."}",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                    )),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 20.0),
-                            child: (nearestStop != null)
-                                ? Text("${"Ariving at ${bus!.startTime}"}",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                    ))
-                                : Text("Getting . . .",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                    )),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 20.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                    overflow: TextOverflow.ellipsis,
-                                    'Bus Number: ${driver?.busNumber ?? 'Loading...'}',
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold)),
-                                Text(
-                                    overflow: TextOverflow.ellipsis,
-                                    'Color: ${driver?.busColor ?? 'Loading...'}',
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 5),
-                          GestureDetector(
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text('Driver Details'),
-                                    content: SingleChildScrollView(
-                                      child: Column(
-                                        children: [
-                                          CircleAvatar(
-                                            radius: 40,
-                                            backgroundImage: NetworkImage(driver!
-                                                    .profileImageUrl ??
-                                                'https://via.placeholder.com/150'),
-                                          ),
-                                          SizedBox(height: 10),
-                                          Text(
-                                            driver?.name ?? 'Loading...',
-                                            style: TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          SizedBox(height: 10),
-                                          Text(
-                                            'Email: ${driver?.email ?? 'Loading...'}',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                          SizedBox(height: 10),
-                                          Text(
-                                            'Phone: ${driver?.phone ?? 'Loading...'}',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                          SizedBox(height: 10),
-                                          Text(
-                                            'Bus Number: ${driver?.busNumber ?? 'Loading...'}',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: Text('Close'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            },
-                            child: Container(
-                              width: double.infinity,
-                              height: 50,
-                              alignment: Alignment.center,
-                              margin: EdgeInsets.symmetric(
-                                horizontal: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Color(0xFF419A95),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Text(
-                                "Check driver details",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 5),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        StudentRoute(uid: widget.uid),
-                                  ));
-                            },
-                            child: Container(
-                              width: double.infinity,
-                              height: 50,
-                              alignment: Alignment.center,
-                              margin: EdgeInsets.symmetric(
-                                horizontal: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Color(0xFF419A95),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Text(
-                                "View all stops",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )),
-              ],
+                      )),
+                ],
+              ),
+        body: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: GoogleMap(
+            onMapCreated: (GoogleMapController controller) {
+              setState(() {
+                mapController = controller;
+              });
+            },
+            polylines: _createPolylines(),
+            markers: {
+              if (pickupMarker != null) pickupMarker!,
+              if (destMarker != null) destMarker!,
+              if (nearestStop != null) nearestStop!,
+            },
+            initialCameraPosition: CameraPosition(
+              target: LatLng(
+                nearestStop?.position.latitude ?? 0,
+                nearestStop?.position.longitude ?? 0,
+              ),
+              zoom: 11,
             ),
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           _onFabPressed();
-
           findNearestMarker(stopMarkers);
         },
         child: Icon(Icons.location_searching),
@@ -431,11 +424,13 @@ class _StudentNearestState extends State<StudentNearest> {
     Set<Polyline> polylines = {};
 
     List<LatLng> allCords = [];
-    allCords.add(bus!.startCords);
-    for (var v in bus!.stops) {
-      allCords.add(v.stopCords);
+    if (bus != null) {
+      allCords.add(bus!.startCords);
+      for (var v in bus!.stops) {
+        allCords.add(v.stopCords);
+      }
+      allCords.add(bus!.endCords);
     }
-    allCords.add(bus!.endCords);
 
     polylines.add(
       Polyline(
