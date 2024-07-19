@@ -3,14 +3,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:first_bus_project/models/route_model.dart';
 import 'package:first_bus_project/models/user_model.dart';
 import 'package:first_bus_project/services/routes_services.dart';
+import 'package:first_bus_project/student/menu/student_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:timeline_tile/timeline_tile.dart';
+import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 class StudentRoute extends StatefulWidget {
   final String uid;
-  StudentRoute({super.key, required this.uid});
+  UserModel user;
+  StudentRoute({super.key, required this.uid, required this.user});
 
   @override
   State<StudentRoute> createState() => _StudentRouteState();
@@ -30,6 +33,7 @@ class _StudentRouteState extends State<StudentRoute> {
   BusRouteModel? bus;
   UserModel? driver;
   bool isLoading = true;
+  final PanelController _panelController = PanelController();
 
   @override
   void initState() {
@@ -162,177 +166,154 @@ class _StudentRouteState extends State<StudentRoute> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: Padding(
+          padding: const EdgeInsets.only(top: 15.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Comsats Wah routes",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(
+                "All station routing on comsats wah",
+                style: TextStyle(fontSize: 17),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(top: 15.0),
+            child: IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => StudentMenuScreen(
+                      userModel: widget.user,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.person),
+            ),
+          )
+        ],
         automaticallyImplyLeading: false,
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  margin: EdgeInsets.only(bottom: 10),
-                  height: MediaQuery.of(context).size.height * 0.5,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: GoogleMap(
-                      onMapCreated: (GoogleMapController controller) async {
-                        setState(() {
-                          mapController = controller;
-                        });
-                        await _getCurrentLocation();
-                        mapController?.animateCamera(
-                          CameraUpdate.newLatLngZoom(currentLocation!, 11),
-                        );
-                      },
-                      polylines: _createPolylines(),
-                      markers: totalMarkers,
-                      initialCameraPosition: CameraPosition(
-                        target: pickup!,
-                        zoom: 14,
+          : Padding(
+
+            padding: const EdgeInsets.only(top:20.0),
+            child: SlidingUpPanel(
+                controller: _panelController,
+                minHeight: MediaQuery.of(context).size.height * 0.35,
+                maxHeight: MediaQuery.of(context).size.height * 0.35,
+                panel: Center(
+                  child: Expanded(
+                      child: ListView.builder(
+                        padding: EdgeInsets.all(10),
+                        itemCount: bus?.totalStops ?? 0,
+                        itemBuilder: (context, index) {
+                          return TimelineTile(
+                          
+                            alignment: TimelineAlign.start,
+                            isFirst: index == 0,
+                            isLast: bus!.stops.length == index + 1,
+                            beforeLineStyle: LineStyle(
+                              color: Color.fromARGB(255, 32, 169, 162),
+                            ),
+                            afterLineStyle: LineStyle(
+                              color: Color.fromARGB(255, 32, 169, 162),
+                            ),
+                            indicatorStyle: IndicatorStyle(
+                              
+                              width: 25,
+                              height: 25,
+                              color: Color(0xFF419A95),
+                              padding: EdgeInsets.symmetric(horizontal: 4),
+                              indicator: Container(
+                                alignment: Alignment.center,
+                                child: Text((index + 1).toString(),
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold)),
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF419A95),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                            endChild: Container(
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 10),
+                                  margin: EdgeInsets.all(4),
+                                  width: double.infinity,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        bus!.stops[index].stopName,
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(height: 5),
+                                      Text(
+                                        bus!.stops[index].time ??
+                                            'No time provided',
+                                        style: TextStyle(fontSize: 14),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                ),
+                body: Column(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      margin: EdgeInsets.only(bottom: 10),
+                      height: MediaQuery.of(context).size.height * 0.55,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: GoogleMap(
+                          onMapCreated: (GoogleMapController controller) async {
+                            setState(() {
+                              mapController = controller;
+                            });
+                            await _getCurrentLocation();
+                            mapController?.animateCamera(
+                              CameraUpdate.newLatLngZoom(pickup!, 11),
+                            );
+                          },
+                          polylines: _createPolylines(),
+                          markers: totalMarkers,
+                          initialCameraPosition: CameraPosition(
+                            target: pickup!,
+                            zoom: 14,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    
+                  ],
                 ),
-                GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text('Driver Details'),
-                          content: SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                CircleAvatar(
-                                  radius: 40,
-                                  backgroundImage: NetworkImage(
-                                      driver!.profileImageUrl ??
-                                          'https://via.placeholder.com/150'),
-                                ),
-                                SizedBox(height: 10),
-                                Text(
-                                  driver?.name ?? 'Loading...',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                SizedBox(height: 10),
-                                Text(
-                                  'Email: ${driver?.email ?? 'Loading...'}',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                SizedBox(height: 10),
-                                Text(
-                                  'Phone: ${driver?.phone ?? 'Loading...'}',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                SizedBox(height: 10),
-                                Text(
-                                  'Bus Number: ${driver?.busNumber ?? 'Loading...'}',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: Text('Close'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    height: 50,
-                    alignment: Alignment.center,
-                    margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Text(
-                      "Check driver details",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.all(10),
-                    itemCount: bus?.totalStops ?? 0,
-                    itemBuilder: (context, index) {
-                      return TimelineTile(
-                        alignment: TimelineAlign.start,
-                        isFirst: index == 0,
-                        isLast: bus!.stops.length == index + 1,
-                        indicatorStyle: IndicatorStyle(
-                          width: 20,
-                          color: Colors.black,
-                          padding: EdgeInsets.symmetric(horizontal: 4),
-                          indicator: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                        endChild: Container(
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 10),
-                              margin: EdgeInsets.all(4),
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: isRemember[index]
-                                    ? Colors.green
-                                    : Colors.red,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    bus!.stops[index].stopName,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    bus!.stops[index].time ??
-                                        'No time provided',
-                                    style: TextStyle(fontSize: 14),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                )
-              ],
-            ),
+              ),
+          ),
       floatingActionButton: FloatingActionButton(
         onPressed: _onFabPressed,
         child: Icon(Icons.location_searching),

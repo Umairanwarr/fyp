@@ -142,162 +142,178 @@ class _StudentMapScreenState extends State<StudentMapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: false,
         automaticallyImplyLeading: false,
-        title: const Text('Student Map'),
+        title:  Padding(
+          padding: const EdgeInsets.only(top:15.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Comsats Wah routes", style: TextStyle(fontSize: 18, fontWeight:FontWeight.bold)),
+              Text("All station routing on comsats wah", style: TextStyle(fontSize: 17),),
+            ],
+          ),
+        ),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => StudentMenuScreen(
-                    userModel: widget.userModel,
+          Padding(
+            padding: const EdgeInsets.only(top:15.0),
+            child: IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => StudentMenuScreen(
+                      userModel: widget.userModel,
+                    ),
                   ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.person),
+                );
+              },
+              icon: const Icon(Icons.person),
+            ),
           )
         ],
       ),
-      body: SlidingUpPanel(
-        maxHeight: MediaQuery.of(context).size.height * 0.38,
-        minHeight: MediaQuery.of(context).size.height * 0.38,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        panel: Column(
-          children: [
-            SizedBox(
-              width: 70,
-              child: Divider(
-                thickness: 5,
-                color: Colors.grey[400],
+      body: Padding(
+        padding: const EdgeInsets.only(top:20.0),
+        child: SlidingUpPanel(
+          maxHeight: MediaQuery.of(context).size.height * 0.38,
+          minHeight: MediaQuery.of(context).size.height * 0.38,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          panel: Column(
+            children: [
+              SizedBox(
+                width: 70,
+                child: Divider(
+                  thickness: 5,
+                  color: Colors.grey[400],
+                ),
               ),
-            ),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: _firestore.collection('busRoutes').snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  }
-
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  }
-                  List<String> docs = [];
-
-                  List<BusRouteModel> busRoutes =
-                      snapshot.data!.docs.map((doc) {
-                    docs.add(doc.id);
-                    return BusRouteModel.fromFirestore(doc.data(), doc.id);
-                  }).toList();
-
-                  return ListView.builder(
-                    itemCount: busRoutes.length,
-                    itemBuilder: (context, index) {
-                      BusRouteModel route = busRoutes[index];
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            selectedRouteId = route.id;
-                          });
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 10),
-                          margin:
-                              EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: selectedRouteId == route.id
-                                ? const Color.fromRGBO(76, 175, 80, 1)
-                                    .withOpacity(0.4)
-                                : Colors.blue.withOpacity(0.0),
-                            border: Border.all(
-                                color: Colors.green.withOpacity(0.4)),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                route.startLocation,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black),
-                              ),
-                              if (route.stops.isNotEmpty &&
-                                  index < route.stops.length)
+              Expanded(
+                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: _firestore.collection('busRoutes').snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+        
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                    List<String> docs = [];
+        
+                    List<BusRouteModel> busRoutes =
+                        snapshot.data!.docs.map((doc) {
+                      docs.add(doc.id);
+                      return BusRouteModel.fromFirestore(doc.data(), doc.id);
+                    }).toList();
+        
+                    return ListView.builder(
+                      itemCount: busRoutes.length,
+                      itemBuilder: (context, index) {
+                        BusRouteModel route = busRoutes[index];
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedRouteId = route.id;
+                            });
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 10),
+                            margin:
+                                EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: selectedRouteId == route.id
+                                  ? const Color.fromRGBO(76, 175, 80, 1)
+                                      .withOpacity(0.4)
+                                  : Colors.blue.withOpacity(0.0),
+                              border: Border.all(
+                                  color: Colors.green.withOpacity(0.4)),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                                 Text(
-                                  "Time : ${route.startTime}",
+                                  route.startLocation,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.grey[600]),
+                                      color: Colors.black),
                                 ),
-                              InkWell(
-                                onTap: () {
-                                  print(
-                                      "--------------------${route.driverId}");
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            StudentNearest(uid: route.driverId),
-                                      ));
-                                },
-                                child: Container(
-                                  width: double.infinity,
-                                  height: 50,
-                                  alignment: Alignment.center,
-                                  margin: EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 10),
-                                  decoration: BoxDecoration(
-                                      color: Color(0Xff419A95),
-                                      borderRadius: BorderRadius.circular(5)),
-                                  child: Text(
-                                    "Check Stop",
-                                    style: TextStyle(color: Colors.white),
+                                if (route.stops.isNotEmpty &&
+                                    index < route.stops.length)
+                                  Text(
+                                    "Time : ${route.startTime}",
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[600]),
+                                  ),
+                                InkWell(
+                                  onTap: () {
+                                    print(
+                                        "--------------------${route.driverId}");
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              StudentNearest(uid: route.driverId, user: widget.userModel,),
+                                        ));
+                                  },
+                                  child: Container(
+                                    width: double.infinity,
+                                    height: 50,
+                                    alignment: Alignment.center,
+                                    margin: EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 10),
+                                    decoration: BoxDecoration(
+                                        color: Color(0Xff419A95),
+                                        borderRadius: BorderRadius.circular(5)),
+                                    child: Text(
+                                      "Check Stop",
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          body: Container(
+            // padding: EdgeInsets.symmetric(horizontal: 10),
+            margin: EdgeInsets.only(bottom: 10),
+            height: MediaQuery.of(context).size.height * 0.5,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: GoogleMap(
+                onMapCreated: (GoogleMapController controller) async {
+                  setState(() {
+                    mapController = controller;
+                  });
+                  await _getCurrentLocation();
+                  mapController?.animateCamera(
+                    CameraUpdate.newLatLngZoom(currentLocation!, 11),
                   );
                 },
-              ),
-            ),
-          ],
-        ),
-        body: Container(
-          // padding: EdgeInsets.symmetric(horizontal: 10),
-          margin: EdgeInsets.only(bottom: 10),
-          height: MediaQuery.of(context).size.height * 0.5,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: GoogleMap(
-              onMapCreated: (GoogleMapController controller) async {
-                setState(() {
-                  mapController = controller;
-                });
-                await _getCurrentLocation();
-                mapController?.animateCamera(
-                  CameraUpdate.newLatLngZoom(currentLocation!, 11),
-                );
-              },
-              polylines: _createPolylines(),
-              markers: totalMarkers,
-              initialCameraPosition: CameraPosition(
-                target: currentLocation ?? LatLng(33.7445, 72.7867),
-                zoom: 12,
+                polylines: _createPolylines(),
+                markers: totalMarkers,
+                initialCameraPosition: CameraPosition(
+                  target: currentLocation ?? LatLng(33.7445, 72.7867),
+                  zoom: 12,
+                ),
               ),
             ),
           ),
@@ -349,4 +365,6 @@ class _StudentMapScreenState extends State<StudentMapScreen> {
     // Return a Color object with random values
     return Color.fromARGB(255, r, g, b);
   }
+
+  
 }
