@@ -52,11 +52,12 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDhwF5xtkb9nvSbyrs0dya0tVwl-Uxcr40',
-    appId: '1:429232936844:android:f4bd74067d0d3f190868a9',
-    messagingSenderId: '429232936844',
-    projectId: 'bus-client-bc5e5',
-    storageBucket: 'bus-client-bc5e5.appspot.com',
+ static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyC86GFa9M0hDQjgPl1KBBFxzViaeGAeJDQ',
+    appId: '1:166101124144:android:4e4a43c5c55d92c96119f5',
+    messagingSenderId: '166101124144',
+    projectId: 'fyp-bus-first',
+    storageBucket: 'fyp-bus-first.appspot.com',
   );
+
 }

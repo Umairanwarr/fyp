@@ -1,40 +1,21 @@
 {
   "project_info": {
-    "project_number": "429232936844",
-    "project_id": "bus-client-bc5e5",
-    "storage_bucket": "bus-client-bc5e5.appspot.com"
+    "project_number": "166101124144",
+    "project_id": "fyp-bus-first",
+    "storage_bucket": "fyp-bus-first.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:429232936844:android:f4bd74067d0d3f190868a9",
+        "mobilesdk_app_id": "1:166101124144:android:4e4a43c5c55d92c96119f5",
         "android_client_info": {
-          "package_name": "com.android.application"
+          "package_name": "com.example.first"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDhwF5xtkb9nvSbyrs0dya0tVwl-Uxcr40"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:429232936844:android:0133a32603e102430868a9",
-        "android_client_info": {
-          "package_name": "com.example.app"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDhwF5xtkb9nvSbyrs0dya0tVwl-Uxcr40"
+          "current_key": "AIzaSyC86GFa9M0hDQjgPl1KBBFxzViaeGAeJDQ"
         }
       ],
       "services": {

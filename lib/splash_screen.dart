@@ -1,5 +1,6 @@
 import 'package:first_bus_project/services/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,6 +14,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   void initState() {
+    Geolocator.requestPermission();
     super.initState();
     _authService.checkUserAndNavigate(
       context: context,
