@@ -10,6 +10,7 @@ import 'package:first_bus_project/driver/menu/driver_menu.dart';
 import 'package:first_bus_project/models/route_model.dart';
 import 'package:first_bus_project/models/user_model.dart';
 import 'package:timeline_tile/timeline_tile.dart';
+import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 class DriverMapScreen extends StatefulWidget {
   final UserModel userModel;
@@ -139,7 +140,6 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text('Driver Map'),
@@ -160,183 +160,203 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
           )
         ],
       ),
-      body: Column(
-        children: [
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            margin: EdgeInsets.only(bottom: 10),
-            height: MediaQuery.of(context).size.height * 0.5,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: GoogleMap(
-                onMapCreated: (GoogleMapController controller) {
-                  setState(() {
-                    mapController = controller;
-                  });
-                },
-                polylines: _createPolylines(),
-                markers: totalMarkers,
-                initialCameraPosition: CameraPosition(
-                  target: currentLocation ?? LatLng(37.7749, -122.4194),
-                  zoom: 12,
-                ),
-              ),
-            ),
-          ),
-          (bus?.driverId != null && bus!.driverId.isNotEmpty) ? Expanded(
-  child: ListView.builder(
-    padding: EdgeInsets.all(10),
-    itemCount: widget.busRouteModel!.totalStops,
-    itemBuilder: (context, index) {
-      return TimelineTile(
-        alignment: TimelineAlign.start,
-        isFirst: index == 0,
-        isLast: bus!.stops.length == index + 1,
-        indicatorStyle: IndicatorStyle(
-          width: 20,
-          color: Colors.black,
-          padding: EdgeInsets.symmetric(horizontal: 4),
-          indicator: Container(
-            decoration: BoxDecoration(
-              color: Colors.black,
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-        endChild: GestureDetector(
-          onTap: () => toggleReached(index),
-          child: Container(
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                margin: EdgeInsets.all(4),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: isRemember[index]
-                      ? Colors.green
-                      : Colors.white,
-                  border: Border.all(),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 200,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            bus!.stops[index].stopName,
-                            style: TextStyle(
-                              fontSize: 20, 
-                              fontWeight: FontWeight.bold, 
-                              color: isRemember[index]
-                                ? const Color.fromRGBO(255, 255, 255, 1)
-                                : Colors.black,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            bus!.stops[index].time,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: isRemember[index]
-                                ? Colors.white
-                                : Colors.black,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        beforeLineStyle: LineStyle(
-          color: isRemember[index]
-            ? Colors.teal
-            : Colors.teal.shade200,
-          thickness: 6,
-        ),
-      );
-    },
-  ),
-) : Container(),
-
-GestureDetector(
-  onTap: () {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            "Are you sure",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          content: Text(
-            
-              "You want to delete this route? - "),
-          actions: [
-            TextButton(
-              onPressed: ()async {
-                try{
-await FirebaseFirestore.instance
-        .collection('busRoutes') // Change to your collection name
-        .doc(bus!.driverId)
-        .delete();
-        setState(() {
-         bus = BusRouteModel.empty();
-         totalMarkers.clear();
-         allCords.clear();
-         
-        });
-                } catch(e){
-                  print("error ------- $e");
-                }
-               
-                Navigator.of(context).pop();
-              },
-              child: Text("OK"),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("Cancel"),
-            ),
-          ],
-        );
-      },
-    );
-  },
-  child: Container(
-                                width: double.infinity,
-                                height: 50,
-                                alignment: Alignment.center,
-                                margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      body: SlidingUpPanel(
+        maxHeight: MediaQuery.of(context).size.height * 0.38,
+        minHeight: MediaQuery.of(context).size.height * 0.38,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        panel: Column(
+          children: [
+            SizedBox(
+                width: 70,
+                child: Divider(thickness: 5, color: Colors.grey[400])),
+            (bus?.driverId != null && bus!.driverId.isNotEmpty)
+                ? Expanded(
+                    child: Container(
+                      // decoration: BoxDecoration(border: Border.all()),
+                      padding: EdgeInsets.all(8),
+                      child: ListView.builder(
+                        padding: EdgeInsets.all(10),
+                        itemCount: widget.busRouteModel!.totalStops,
+                        itemBuilder: (context, index) {
+                          return TimelineTile(
+                            alignment: TimelineAlign.start,
+                            isFirst: index == 0,
+                            isLast: bus!.stops.length == index + 1,
+                            indicatorStyle: IndicatorStyle(
+                              width: 20,
+                              color: Colors.black,
+                              padding: EdgeInsets.symmetric(horizontal: 4),
+                              indicator: Container(
                                 decoration: BoxDecoration(
-                    color: Colors.black, borderRadius: BorderRadius.circular(5)),
-                                child: Text(
-                                  "Delete Routes",
-                                  style: TextStyle(color: Colors.white),
+                                  color: Colors.black,
+                                  shape: BoxShape.circle,
                                 ),
                               ),
-),
-        ],
+                            ),
+                            endChild: GestureDetector(
+                              onTap: () => toggleReached(index),
+                              child: Container(
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 10),
+                                    margin: EdgeInsets.all(4),
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color: isRemember[index]
+                                          ? Colors.green
+                                          : Colors.white,
+                                      border: Border.all(),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 200,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                bus!.stops[index].stopName,
+                                                style: TextStyle(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isRemember[index]
+                                                      ? const Color.fromRGBO(
+                                                          255, 255, 255, 1)
+                                                      : Colors.black,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              Text(
+                                                bus!.stops[index].time,
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isRemember[index]
+                                                      ? Colors.white
+                                                      : Colors.black,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            beforeLineStyle: LineStyle(
+                              color: isRemember[index]
+                                  ? Colors.teal
+                                  : Colors.teal.shade200,
+                              thickness: 6,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                : Container(),
+            GestureDetector(
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text(
+                        "Are you sure",
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      content: Text("You want to delete this route? - "),
+                      actions: [
+                        TextButton(
+                          onPressed: () async {
+                            try {
+                              await FirebaseFirestore.instance
+                                  .collection('busRoutes')
+                                  .doc(bus!.driverId)
+                                  .delete();
+                              setState(() {
+                                bus = BusRouteModel.empty();
+                                totalMarkers.clear();
+                                allCords.clear();
+                              });
+                            } catch (e) {
+                              print("error ------- $e");
+                            }
+
+                            Navigator.of(context).pop();
+                          },
+                          child: Text("OK"),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text("Cancel"),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              child: Container(
+                width: double.infinity,
+                height: 50,
+                alignment: Alignment.center,
+                margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                decoration: BoxDecoration(
+                    color: Color(0Xff419A95),
+                    borderRadius: BorderRadius.circular(5)),
+                child: Text(
+                  "Delete Routes",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            Container(
+              // padding: EdgeInsets.symmetric(horizontal: 10),
+              margin: EdgeInsets.only(bottom: 10),
+              height: MediaQuery.of(context).size.height * 0.5,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: GoogleMap(
+                  onMapCreated: (GoogleMapController controller) async {
+                    setState(() {
+                      mapController = controller;
+                    });
+                    await _getCurrentLocation();
+                    mapController?.animateCamera(
+                      CameraUpdate.newLatLngZoom(currentLocation!, 11),
+                    );
+                  },
+                  polylines: _createPolylines(),
+                  markers: totalMarkers,
+                  initialCameraPosition: CameraPosition(
+                    target: currentLocation ?? LatLng(33.7445, 72.7867),
+                    zoom: 12,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
-       
-        onPressed: _onFabPressed,
-        child: Icon(Icons.room)
-      ),
+          onPressed: _onFabPressed, child: Icon(Icons.room)),
     );
   }
 
@@ -365,9 +385,7 @@ await FirebaseFirestore.instance
     return polylines;
   }
 
-
-toggleReached(int index) {
- 
+  toggleReached(int index) {
     // Show a dialog when the state changes to 'reached'
     showDialog(
       context: context,
@@ -383,7 +401,7 @@ toggleReached(int index) {
             TextButton(
               onPressed: () {
                 setState(() {
-                 update(index);
+                  update(index);
 
                   isRemember[index] = !isRemember[index];
                 });
@@ -403,26 +421,21 @@ toggleReached(int index) {
     );
   }
 
-  update(index)async{
+  update(index) async {
     LatLng v = bus!.stops[index].stopCords;
-     final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-     final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-     final querySnapshot = await _firestore
-          .collection('busRoutes').doc(_firebaseAuth.currentUser!.uid)
-          .update({
-            'stops.$index' :{
-              'stopCords' : {
-                'latitude' : v.latitude,
-                 'longitude' :v.longitude
-              },
-              'isReached' : false,
-              'stopLocation' : bus!.stops[index].stopLocation,
-              'stopName' : bus!.stops[index].stopName,
-              'time' : bus!.stops[index].time,
-            },
-            
-          });
-          
+    final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+    final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+    final querySnapshot = await _firestore
+        .collection('busRoutes')
+        .doc(_firebaseAuth.currentUser!.uid)
+        .update({
+      'stops.$index': {
+        'stopCords': {'latitude': v.latitude, 'longitude': v.longitude},
+        'isReached': false,
+        'stopLocation': bus!.stops[index].stopLocation,
+        'stopName': bus!.stops[index].stopName,
+        'time': bus!.stops[index].time,
+      },
+    });
   }
 }
-
