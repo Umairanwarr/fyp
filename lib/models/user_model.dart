@@ -7,6 +7,7 @@ class UserModel {
   final String busColor;
   final String universityName;
   final String profileImageUrl;
+  final String? licenseImageUrl;
 
   UserModel({
     required this.name,
@@ -17,6 +18,7 @@ class UserModel {
     required this.busColor,
     required this.universityName,
     required this.profileImageUrl,
+    this.licenseImageUrl,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class UserModel {
       busColor: json['busColor'],
       universityName: json['universityName'],
       profileImageUrl: json['profileImageUrl'],
+      licenseImageUrl: json['licenseImageUrl'],
     );
   }
 
@@ -42,6 +45,7 @@ class UserModel {
       'busColor': busColor,
       'universityName': universityName,
       'profileImageUrl': profileImageUrl,
+      'licenseImageUrl': licenseImageUrl,
     };
   }
 
@@ -51,34 +55,35 @@ class UserModel {
     String? phone,
     String? userType,
     String? busNumber,
-    String? busStop,
+    String? busColor,
     String? universityName,
     String? profileImageUrl,
+    String? licenseImageUrl,
   }) {
     return UserModel(
       name: name ?? this.name,
       email: email ?? this.email,
       phone: phone ?? this.phone,
       userType: userType ?? this.userType,
-      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       busNumber: busNumber ?? this.busNumber,
-      busColor: busStop ?? busColor,
+      busColor: busColor ?? this.busColor,
       universityName: universityName ?? this.universityName,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      licenseImageUrl: licenseImageUrl ?? this.licenseImageUrl,
     );
   }
 
-  
   factory UserModel.fromFirestore(Map<String, dynamic> data, String id) {
     return UserModel(
       name: data['name'],
       email: data['email'],
       phone: data['phone'],
-      profileImageUrl: data['profileImageUrl'],
       userType: data['userType'],
       busNumber: data['busNumber'],
       busColor: data['busColor'],
       universityName: data['universityName'],
- );
+      profileImageUrl: data['profileImageUrl'],
+      licenseImageUrl: data['licenseImageUrl'],
+    );
   }
-
 }

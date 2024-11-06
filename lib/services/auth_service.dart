@@ -98,7 +98,7 @@ class AuthService {
     } else if (userModel.userType == 'Driver') {
       final BusRouteModel busRouteModel =
           await _routesService.getBusRoute(context, firebaseUser!.uid);
-              print("---------------------------${busRouteModel.startLocation}");
+      print("---------------------------${busRouteModel.startLocation}");
 
       Navigator.pushReplacement(
         context,
@@ -137,6 +137,27 @@ class AuthService {
 
       auth.User? firebaseUser = userCredential.user;
       if (firebaseUser != null) {
+        // Check if email is verified
+        if (!firebaseUser.emailVerified) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Please verify your email to log in.'),
+              action: SnackBarAction(
+                label: 'Resend Verification',
+                onPressed: () async {
+                  await firebaseUser.sendEmailVerification();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Verification email has been resent.'),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+          return null;
+        }
+
         DocumentSnapshot userSnapshot =
             await _firestore.collection('users').doc(firebaseUser.uid).get();
 
@@ -180,10 +201,13 @@ class AuthService {
     required BuildContext context,
     required UserModel updatedUser,
     File? newProfileImage,
+    File? newLicenseImage,
   }) async {
     try {
       final firebaseUser = _firebaseAuth.currentUser;
       String? profileImageUrl = updatedUser.profileImageUrl;
+      String? licenseImageUrl =
+          updatedUser.licenseImageUrl; // Assuming this is a field in UserModel
 
       if (newProfileImage != null) {
         profileImageUrl = await CommonFunctions.uploadImageToFirebase(
@@ -193,9 +217,19 @@ class AuthService {
         );
       }
 
+      if (newLicenseImage != null) {
+        licenseImageUrl = await CommonFunctions.uploadImageToFirebase(
+          path: constLicenseImageCollection,
+          imageFile: newLicenseImage,
+          context: context,
+        );
+      }
+
       if (firebaseUser != null) {
-        final userToUpdate =
-            updatedUser.copyWith(profileImageUrl: profileImageUrl);
+        final userToUpdate = updatedUser.copyWith(
+          profileImageUrl: profileImageUrl,
+          licenseImageUrl: licenseImageUrl, // Update license image URL
+        );
         await _firestore
             .collection('users')
             .doc(firebaseUser.uid)
@@ -248,6 +282,9 @@ class AuthService {
 
       auth.User? firebaseUser = userCredential.user;
       if (firebaseUser != null) {
+        // Send verification email
+        await firebaseUser.sendEmailVerification();
+
         UserModel newUser = UserModel(
           name: name,
           email: email,
@@ -265,7 +302,9 @@ class AuthService {
             .set(newUser.toJson());
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User signed up successfully.')),
+          const SnackBar(
+              content: Text(
+                  'User signed up successfully. A verification email has been sent.')),
         );
       }
     } on auth.FirebaseAuthException catch (e) {

@@ -26,6 +26,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   late TextEditingController _busColorController;
   final AuthService _authService = AuthService();
   File? _profileImage;
+  File? _licenseImage;
 
   @override
   void initState() {
@@ -51,12 +52,6 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     super.dispose();
   }
 
-  void _updateData({required UserModel user}) async {
-    if (_formKey.currentState!.validate()) {
-      _authService.updateUserRecord(updatedUser: user, context: context);
-    }
-  }
-
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
     final pickedImage = await picker.pickImage(source: source);
@@ -66,6 +61,76 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
       });
       Navigator.of(context).pop();
     }
+  }
+
+  Future<void> _pickLicenseImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final pickedImage = await picker.pickImage(source: source);
+    if (pickedImage != null) {
+      setState(() {
+        _licenseImage = File(pickedImage.path);
+      });
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _updateData({required UserModel user}) async {
+    if (_formKey.currentState!.validate()) {
+      _authService.updateUserRecord(
+        updatedUser: user,
+        context: context,
+        newProfileImage: _profileImage,
+        newLicenseImage: _licenseImage, // Pass license image here
+      );
+    }
+  }
+
+  void _showLicenseImagePicker() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SizedBox(
+          height: MediaQuery.of(context).size.height * 0.22,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  _pickLicenseImage(ImageSource.gallery);
+                },
+                child: SizedBox(
+                  height: 50,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.photo_library),
+                      SizedBox(width: 10),
+                      Text('Select License from Gallery'),
+                    ],
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  _pickLicenseImage(ImageSource.camera);
+                },
+                child: SizedBox(
+                  height: 50,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.camera_alt),
+                      SizedBox(width: 10),
+                      Text('Capture License with Camera'),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -194,7 +259,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                     Icons.person,
                     color: Colors.grey,
                   ),
-                  isPassword: true,
+                  isPassword: false,
                   controller: _nameConroller,
                   keyboardType: TextInputType.name,
                   text: 'Full Name',
@@ -211,7 +276,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                     Icons.person,
                     color: Colors.grey,
                   ),
-                  isPassword: true,
+                  isPassword: false,
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   text: 'Phone',
@@ -288,6 +353,28 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                     return null;
                   },
                 ),
+                SizedBox(height: screenHeight * 0.025),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: _showLicenseImagePicker,
+                    icon: const Icon(Icons.upload_file),
+                    label: const Text('Upload License Image'),
+                  ),
+                ),
+                if (_licenseImage != null)
+                  Container(
+                    width: screenWidth * 0.8,
+                    height: screenHeight * 0.25,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Image.file(
+                      _licenseImage!,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 SizedBox(height: screenHeight * 0.025),
                 CustomButton(
                   onTap: () {
