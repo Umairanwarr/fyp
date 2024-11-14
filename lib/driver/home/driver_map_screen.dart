@@ -27,8 +27,8 @@ class DriverMapScreen extends StatefulWidget {
 class _DriverMapScreenState extends State<DriverMapScreen> {
   GoogleMapController? mapController;
   LatLng? currentLocation;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   Marker? pickupMarker;
+  FirebaseAuth auth = FirebaseAuth.instance;
   Marker? destMarker;
   List<LatLng> allCords = [];
   List<bool> isRemember = [];
@@ -148,7 +148,7 @@ class _DriverMapScreenState extends State<DriverMapScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (_) => DriverMenuScreen(
-                    userModel: widget.userModel,
+                    userId: auth.currentUser!.uid,
                     busRouteModel: bus,
                   ),
                 ),
